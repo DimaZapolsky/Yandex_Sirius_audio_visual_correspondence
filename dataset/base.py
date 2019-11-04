@@ -2,7 +2,7 @@ import math
 import torch
 
 
-class DataSet(torch.utils.data.Dataset):
+class Dataset(torch.utils.data.Dataset):
     def __init__(
             self,
             height, width,
