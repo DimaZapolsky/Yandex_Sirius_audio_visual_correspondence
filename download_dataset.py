@@ -18,7 +18,7 @@ os.system('mkdir videos/solo')
 os.system('mkdir videos/duet')
 
 failed = 0
-succes = 0
+success = 0
 
 with open('MUSIC_solo_videos.json') as file:
     cnt = 0
@@ -28,7 +28,7 @@ with open('MUSIC_solo_videos.json') as file:
             os.system('youtube-dl --retries=10 {} -o videos/solo/{}.{}.mp4 -f 18'.format(id, cnt, instrument))
             if does_file_exist('videos/solo/{}.{}.mp4'.format(cnt, instrument)):
                 cnt += 1
-                succes += 1
+                success += 1
             else:
                 failed += 1
 
@@ -41,12 +41,12 @@ with open('MUSIC_duet_videos.json') as file:
             os.system('youtube-dl --retries=10 {} -o videos/duet/{}.{}.mp4 -f 18'.format(id, cnt, instrument))
             if does_file_exist('videos/duet/{}.{}.mp4'.format(cnt, instrument)):
                 cnt += 1
-                succes += 1
+                success += 1
             else:
                 failed += 1
 
 os.system('rm MUSIC_duet_videos.json')
 os.system('rm MUSIC_solo_videos.json')
 
-print('{} files successfully downloaded'.format(succes))
+print('{} files successfully downloaded'.format(success))
 print('{} files failed to download'.format(failed))
