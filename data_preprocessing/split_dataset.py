@@ -28,7 +28,7 @@ def split_dataset(args):
             solo_cnt += 1
 
     for file in os.listdir(os.path.join(video_src_path, 'duet/')):
-        ifsd file.endswith('.pt'):
+        if file.endswith('.pt'):
             duet_cnt += 1
 
     print('solo = {} duet = {}'.format(solo_cnt, duet_cnt))
