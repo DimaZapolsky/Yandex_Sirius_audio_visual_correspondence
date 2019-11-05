@@ -22,8 +22,8 @@ class Dataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         # video and sound are assumed to be in corresponding directories
-        video = torch.load("video/{}.pt".format(self.load_order[index]))
-        sound = torch.load("sound/{}.pt".format(self.load_order[index]))
+        video = torch.load("train/videos/{}.pt".format(self.load_order[index]))
+        sound = torch.load("train/sounds/{}.pt".format(self.load_order[index]))
         return video, sound
 
     def __len__(self):
