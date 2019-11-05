@@ -1,25 +1,31 @@
 import models
+
 import numpy as np
 import sklearn.decomposition
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchvision.models as models
 
 NUM_EPOCHS = 10
-N = 2 #N = count of mixed videos
+N = 2 #count of mixed videos
+K = 16 #count of video features per pixel
+W = 224 #width
+H = 224 #height
+T = 6 #count of frames in one video
 
-lr1 = 1e-4
-lr2 = 1e-3
-lr3 = 1e-3
+lr1 = 1e-4 #learning rate for video model
+lr2 = 1e-3 #learning rate for audio model
+lr3 = 1e-3 #learning rate for audio generator
+
+V = Video(K, H, W, T)
+U = Unet()
+G = Generator()
 
 opt_V = optim.SGD(V.parameters(), lr=lr1)
 opt_U = optim.SGD(U.parameters(), lr=lr2)
 opt_G = optim.SGD(G.parameters(), lr=lr3)
-
-V = Video()
-U = Unet()
-G = Generator()
 
 criterion = nn.BCELoss()
 
@@ -31,14 +37,15 @@ example_freq = 400
 
 batch_count = len(dataloader)
 
-PATH_U = 
-PATH_V =
-PATH_G = 
-PATH_EPOCH = 
-from_save = 0
+PATH_U = "~/training/checkpoints/U_model_epoch"
+PATH_V = "~/training/checkpoints/V_model_epoch"
+PATH_G = "~/training/checkpoints/G_model_epoch"
+PATH_EPOCH = "~/training/checkpoints/epoch_number"
 start_epoch = 0
 ngpu = 1
 device = torch.device("cuda:0" if (torch.cuda.is_available() and ngpu > 0) else "cpu")
+
+from_save = 0
 
 if (from_save == 1):
     U = torch.load(PATH_U)
@@ -59,9 +66,9 @@ for epoch in range(start_epoch, NUM_EPOCHS):
             U.zero_grad()
             V.zero_grad()
             G.zero_grad()
-            
+
             video = data[0][:, i].to(device)
-            
+
             U_res = U(audio_sum)
             V_res = V(video)
             G_res = G(V_res, U_res)#(bs, x, y, t, freq)
@@ -91,9 +98,6 @@ for epoch in range(start_epoch, NUM_EPOCHS):
 
                         loss = criterion(torch.sum(model_answer, [1, 2]), data[1][:, i, :] / audio_sum)
                         test_loss.append(loss)
-            
-
-
             print('epoch [%d/%d]\t batch [%d/%d]\t. Train loss: %d,\t test loss: %d' % (epoch, NUM_EPOCHS, batch_n, batch_count, losses.mean()), test_loss.mean())
 
         if (batch_n % save_freq == 0):
