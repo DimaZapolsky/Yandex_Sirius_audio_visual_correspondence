@@ -3,13 +3,13 @@ import torch.nn as nn
 import torch
 
 class Video(nn.Module):
-    def __init__(self, K, height, width, frames_count):
+    def __init__(self, n_channels, height, width, n_frames):
         super(Video, self).__init__()
 
-        self.K = K
+        self.n_channels = n_channels
         self.height = height
         self.width = width
-        self.frames_count = frames_count
+        self.n_frames = n_frames
 
         self.main = nn.Sequential(*list(models.resnet18(pretrained=True).children())[:-2])
 
@@ -25,9 +25,9 @@ class Video(nn.Module):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
 
-        self.main.add_module("conv_k", nn.Conv2d(512, K, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)))
+        self.main.add_module("conv_k", nn.Conv2d(512, n_channels, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)))
 
-        self.tmp_conv = nn.Conv3d(frames_count, 1, kernel_size=(1, 1, 1))
+        self.tmp_conv = nn.Conv3d(n_frames, 1, kernel_size=(1, 1, 1))
 
         self.activation = nn.Sigmoid()
 
@@ -39,7 +39,7 @@ class Video(nn.Module):
         x = input.reshape((-1, 3, self.height, self.width))
         x = self.main(x)
 
-        x = x.reshape((-1, self.frames_count, self.K, self.height // 16, self.width // 16))
+        x = x.reshape((-1, self.n_frames, self.n_channels, self.height // 16, self.width // 16))
 
         x = self.tmp_conv(x).squeeze()
         x = self.activation(x)
@@ -47,12 +47,12 @@ class Video(nn.Module):
 
 
 class Generator(nn.Module):
-    def __init__(self, K):
+    def __init__(self, n_channels):
         super(Generator, self).__init__()
 
-        self.K = K
+        self.n_channels = n_channels
 
-        self.main = nn.Linear(K, 1)
+        self.main = nn.Linear(n_channels, 1)
 
         self.activation = nn.Sigmoid()
 
