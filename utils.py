@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 
 
-def transform(input, batch_format=False, logbasis=21):
+def transform(input, batch_format=False, log_base=21):
     x, y = input.shape[-2:]
     if batch_format:
         if (len(input.shape) == 3):
@@ -17,7 +17,7 @@ def transform(input, batch_format=False, logbasis=21):
     xl = np.linspace(-1, 1, y)
     yl = np.linspace(-1, 1, y)
 
-    xl = (np.power(logbasis, (xl + 1) / 2) - (logbasis // 2 + 1)) / (logbasis // 2)
+    xl = (np.power(lo_basee, (xl + 1) / 2) - (log_base // 2 + 1)) / (log_base // 2)
 
     xv, yv = np.meshgrid(xl, yl)
 
