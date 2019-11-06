@@ -51,11 +51,13 @@ def train(args):
 
     data_loader = DataLoader(Dataset(height, width,
             args.fps, args.freq, args.fragment_len, batch_size,
-            args.window_len, args.overlap_len, audio_dir=os.path.join(args.test_dir, 'audio/test'), video_dir=os.path.join(args.test_dir, 'video/test')), batch_size=batch_size)
+            args.window_len, args.overlap_len, audio_dir=os.path.join(args.train_dir, 'audio/train'),
+            video_dir=os.path.join(args.train_dir, 'video/train')), batch_size=batch_size)
 
     data_test_loader = DataLoader(Dataset(height, width,
             args.fps, args.freq, args.fragment_len, batch_size,
-            args.window_len, args.overlap_len, audio_dir=os.path.join(args.train_dir, 'audio/train'), video_dir=os.path.join(args.train_dir, 'video/train')), batch_size=batch_size)
+            args.window_len, args.overlap_len, audio_dir=os.path.join(args.test_dir, 'audio/test'),
+            video_dir=os.path.join(args.test_dir, 'video/test')), batch_size=batch_size)
 
     video_model_lr = args.video_model_lr  # learning rate for video model
     audio_model_lr = args.audio_model_lr  # learning rate for audio model
