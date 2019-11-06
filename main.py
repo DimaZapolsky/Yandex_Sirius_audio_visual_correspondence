@@ -35,6 +35,7 @@ def parse_args():
     parser.add_argument('--train-dir', default='./', help='Path to training directory')
     parser.add_argument('--load-saved', default=True, type=bool, help='Flag to load')
     parser.add_argument('--gpu-count', default=1, type=int, help='Number of gpu')
+    parser.add_argument('--batch-size', default=64, type=int, help='Size of batch')
     args = parser.parse_args()
     return args
 
@@ -46,13 +47,22 @@ def train(args):
     width = args.width  # width
     height = args.height  # height
     n_frames = int(args.fps * args.fragment_len)  # count of frames in one video
+    batch_size = args.batch_size
+
+    data_loader = DataLoader(Dataset(height, width,
+            args.fps, args.freq, args.fragment_len, batch_size,
+            args.window_len, args.overlap_len, audio_dir=os.path.join(args.test_dir, 'audio/test'), video_dir=os.path.join(args.test_dir, 'video/test')), batch_size=batch_size)
+
+    data_test_loader = DataLoader(Dataset(height, width,
+            args.fps, args.freq, args.fragment_len, batch_size,
+            args.window_len, args.overlap_len, audio_dir=os.path.join(args.train_dir, 'audio/train'), video_dir=os.path.join(args.train_dir, 'video/train')), batch_size=batch_size)
 
     video_model_lr = args.video_model_lr  # learning rate for video model
     audio_model_lr = args.audio_model_lr  # learning rate for audio model
     generator_lr = args.generator_lr  # learning rate for audio generator
 
     v_model = Video(K, H, width, n_frames)
-    u_model = Unet()
+    u_model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet', in_channels=1, out_channels=n_channels, init_features=32, pretrained=False)
     g_model = Generator(K)
 
     opt_v = optim.SGD(v_model.parameters(), lr=video_model_lr)
@@ -67,7 +77,7 @@ def train(args):
 
     example_freq = args.example_freq
 
-    batch_count = len(dataloader)
+    batch_count = len(data_loader)
 
     path_u = os.path.join(args.train_dir, 'checkpoint/U_model_{}.pt')
     os.makedirs(path_u)
@@ -95,8 +105,8 @@ def train(args):
     loss_test = []
 
     for epoch in range(start_epoch, n_epoch):
-        for batch_n, data in enumerate(dataloader, 0):
-            audio_sum = torch.sum(data[1], 1).to(device)
+        for batch_n, data in enumerate(data_loader, 0):
+            audio_sum = data[2].to(device)
             losses = []
             for i in range(n_video):
                 u_model.zero_grad()
