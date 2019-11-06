@@ -19,7 +19,7 @@ def parse_args():
     parser.add_argument('--src-dir', default='./')
     parser.add_argument('--dst-dir', default='./')
     parser.add_argument('--window-len', default=1022, type=int)
-    parser.add_argument('--overlap-len', default=256, type=int)
+    parser.add_argument('--overlap-len', default=766, type=int)
     args = parser.parse_args()
     return args
 
@@ -30,7 +30,6 @@ def create_dataset_videos(args, src_path, dst_path):
         if not os.path.isfile(os.path.join(src_path, file)) or not file.endswith('.mp4'):
             continue
         capture = cv2.VideoCapture(os.path.join(src_path, file))
-        capture.set(cv2.CAP_PROP_FPS, args.fps)
         src_fps = capture.get(cv2.CAP_PROP_FPS)
         vid_frames = []
 
@@ -74,9 +73,9 @@ def create_dataset_audios(args, src_path, dst_path):
 def main():
     args = parse_args()
     create_dataset_videos(args, os.path.join(args.src_dir, 'videos/solo'), os.path.join(args.dst_dir, 'videos/solo'))
-    create_dataset_videos(args, os.path.join(args.src_dir, 'videos/duet'), os.path.join(args.dst_dir, 'videos/duet'))
-    create_dataset_audios(args, os.path.join(args.src_dir, 'audios/solo'), os.path.join(args.dst_dir, 'audios/solo'))
-    create_dataset_audios(args, os.path.join(args.src_dir, 'audios/duet'), os.path.join(args.dst_dir, 'audios/duet'))
+    #create_dataset_videos(args, os.path.join(args.src_dir, 'videos/duet'), os.path.join(args.dst_dir, 'videos/duet'))
+    #create_dataset_audios(args, os.path.join(args.src_dir, 'audios/solo'), os.path.join(args.dst_dir, 'audios/solo'))
+    #create_dataset_audios(args, os.path.join(args.src_dir, 'audios/duet'), os.path.join(args.dst_dir, 'audios/duet'))
 
 
 if __name__ == '__main__':
