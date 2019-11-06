@@ -6,7 +6,7 @@ class Video(nn.Module):
     def __init__(self, K, height, width, frames_count):
         super(Video, self).__init__()
 
-        self.K = K '''Number of video and audio features'''
+        self.K = K
         self.height = height
         self.width = width
         self.frames_count = frames_count
@@ -38,7 +38,7 @@ class Video(nn.Module):
     def forward(self, input):
         x = input.reshape((-1, 3, self.height, self.width))
         x = self.main(x)
-        print(x.shape)
+
         x = x.reshape((-1, self.frames_count, self.K, self.height // 16, self.width // 16))
 
         x = self.tmp_conv(x).squeeze()
@@ -50,7 +50,7 @@ class Generator(nn.Module):
     def __init__(self, K):
         super(Generator, self).__init__()
 
-        self.K = K '''Number of video and audio features'''
+        self.K = K
 
         self.main = nn.Linear(K, 1)
 
