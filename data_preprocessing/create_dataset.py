@@ -74,9 +74,9 @@ def create_dataset_audios(args, src_path, dst_path):
 def main():
     args = parse_args()
     create_dataset_videos(args, os.path.join(args.src_dir, 'videos/solo'), os.path.join(args.dst_dir, 'videos/solo'))
-    #create_dataset_videos(args, os.path.join(args.src_dir, 'videos/duet'), os.path.join(args.dst_dir, 'videos/duet'))
-    #create_dataset_audios(args, os.path.join(args.src_dir, 'audios/solo'), os.path.join(args.dst_dir, 'audios/solo'))
-    #create_dataset_audios(args, os.path.join(args.src_dir, 'audios/duet'), os.path.join(args.dst_dir, 'audios/duet'))
+    create_dataset_videos(args, os.path.join(args.src_dir, 'videos/duet'), os.path.join(args.dst_dir, 'videos/duet'))
+    create_dataset_audios(args, os.path.join(args.src_dir, 'audios/solo'), os.path.join(args.dst_dir, 'audios/solo'))
+    create_dataset_audios(args, os.path.join(args.src_dir, 'audios/duet'), os.path.join(args.dst_dir, 'audios/duet'))
 
 
 if __name__ == '__main__':
