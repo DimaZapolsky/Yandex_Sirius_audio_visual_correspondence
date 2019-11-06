@@ -27,7 +27,7 @@ class Video(nn.Module):
 
         self.main.add_module("conv_k", nn.Conv2d(512, K, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)))
 
-        self.tmp_conv = nn.Conv3d(K, K, kernel_size=(T, 1, 1))
+        self.tmp_conv = nn.Conv3d(T, 1, kernel_size=(1, 1, 1))
 
         self.activation = nn.Sigmoid()
 
@@ -40,7 +40,6 @@ class Video(nn.Module):
         x = self.main(x)
 
         x = x.reshape((-1, self.T, self.K, self.H // 16, self.W // 16))
-        x = x.permute((0, 2, 1, 3, 4))
 
         x = self.tmp_conv(x).squeeze()
         x = self.activation(x)
@@ -68,5 +67,4 @@ class Generator(nn.Module):
 
         x = self.activation(x)
         return x
-
 
