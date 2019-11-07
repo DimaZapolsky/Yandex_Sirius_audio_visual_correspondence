@@ -7,7 +7,7 @@ class Unet(torch.nn.Module):
             feature_channels=64,  # hyperparameter: number of feature channels between encoder and decoder
             depth=5,  # hyperparameter: number of unet convolutions
             generated_features=64,  # hyperparameter: final number of feature maps
-            use_dropout=False
+            use_dropout=False,
     ):
         super(Unet, self).__init__()
         self.min_depth = 5
@@ -63,8 +63,7 @@ class UnetBlock(torch.nn.Module):
             input_channels=None, inner_output_channels=None,
             outermost=False, innermost=False,
             use_dropout=False, noskip=False,
-            submodule=None
-
+            submodule=None,
     ):
         super(UnetBlock, self).__init__()
         self.outermost = outermost
@@ -138,8 +137,8 @@ class UnetBlock(torch.nn.Module):
 
         self.model = torch.nn.Sequential(*model)
 
-    def forward(self, x):
+    def forward(self, input_data):
         if self.outermost or self.noskip:
-            return self.model(x)
+            return self.model(input_data)
 
-        return torch.cat([x, self.model(x)], 1)
+        return torch.cat([input_data, self.model(input_data)], 1)
