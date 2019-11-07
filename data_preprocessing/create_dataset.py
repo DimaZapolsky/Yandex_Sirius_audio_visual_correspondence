@@ -50,10 +50,9 @@ def create_dataset_videos(args, src_path, dst_path):
         vid_frames = np.asarray(vid_frames, dtype='uint8')
         vid_frames = torch.ByteTensor(vid_frames)
         capture.release()
-        print('TIME =', time.time() - start_time)
-        torch.save(vid_frames, os.path.join(dst_path, file.split('.')[0] + '.pt'))
-        print('TIME =', time.time() - start_time)
 
+        torch.save(vid_frames, os.path.join(dst_path, file.split('.')[0] + '.pt'))
+        
 
 def stereo_to_mono(wave):
     return (wave[:, 0] + wave[:, 1]) // 2
