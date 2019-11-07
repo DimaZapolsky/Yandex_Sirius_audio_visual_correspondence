@@ -28,7 +28,7 @@ def parse_args():
     parser.add_argument('--fragment-len', default=6, type=float, help='Durability of video/audio fragments')
     parser.add_argument('--video-model-lr', default=1e-4, type=float, help='Learning rate for video model')
     parser.add_argument('--audio-model-lr', default=1e-3, type=float, help='Learning rate for audio model')
-    parser.add_argument('--generator-lr', default=1e-4, type=float, help='Learning rate for generator')
+    parser.add_argument('--generator-lr', default=1e-3, type=float, help='Learning rate for generator')
     parser.add_argument('--print-loss-freq', default=50, type=int, help='Number of batches to print losses')
     parser.add_argument('--save-model-freq', default=300, type=int, help='Number of batches to save model')
     parser.add_argument('--example-freq', default=400, type=int, help='Batches to print example')
@@ -36,6 +36,7 @@ def parse_args():
     parser.add_argument('--load-saved', default=True, type=bool, help='Flag to load')
     parser.add_argument('--gpu-count', default=1, type=int, help='Number of gpu')
     parser.add_argument('--batch-size', default=64, type=int, help='Size of batch')
+    parser.add_argument('--pretrained', default=False, type=bool, help='Pretrain U-net model')
     args = parser.parse_args()
     return args
 
@@ -48,6 +49,7 @@ def train(args):
     height = args.height  # height
     n_frames = int(args.fps * args.fragment_len)  # count of frames in one video
     batch_size = args.batch_size
+    audio_pretrained = args.pretrained
 
     data_loader = DataLoader(Dataset(height, width,
             args.fps, args.freq, args.fragment_len, batch_size,
@@ -64,7 +66,7 @@ def train(args):
     generator_lr = args.generator_lr  # learning rate for audio generator
 
     v_model = Video(K, H, width, n_frames)
-    u_model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet', in_channels=1, out_channels=n_channels, init_features=32, pretrained=False)
+    u_model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet', in_channels=1, out_channels=n_channels, init_features=32, pretrained=audio_pretrained)
     g_model = Generator(K)
 
     opt_v = optim.SGD(v_model.parameters(), lr=video_model_lr)
