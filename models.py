@@ -41,7 +41,7 @@ class Video(nn.Module):
 
         x = x.reshape((-1, self.n_frames, self.n_channels, self.height // 16, self.width // 16))
 
-        x = self.tmp_conv(x).squeeze()
+        x = self.tmp_conv(x).squeeze(1)
         x = self.activation(x)
         return x
 
@@ -59,7 +59,7 @@ class Generator(nn.Module):
     def forward(self, inputV, inputA):  # inputV.shape = [bs, K, h // 16, w // 16], inputA.shape = [bs, K, audH, audW]
         x = inputV[:, :, :, :, None, None] * inputA[:, :, None, None, :, :]
         x = x.permute((0, 2, 3, 4, 5, 1))
-        x = self.main(x).squeeze()
+        x = self.main(x).squeeze(5)
 
         x = self.activation(x)
         return x  # x.shape = [bs, h // 16, w // 16, audH, audW]

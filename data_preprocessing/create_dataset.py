@@ -63,10 +63,7 @@ def create_dataset_audios(args, src_path, dst_path):
         fs, data = wavfile.read(os.path.join(src_path, file))
         if len(data.shape) > 1:
             data = stereo_to_mono(data)
-        # data = stft(data, nperseg=args.window_len, noverlap=args.overlap_len)
-        # data = data[2]
-        # data = np.abs(data).astype(np.float64)
-        # data = torch.Tensor(data[2])
+
         data = torch.Tensor(data)
         torch.save(data, os.path.join(dst_path, file.split('.')[0] + '.pt'))
 
