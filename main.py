@@ -73,9 +73,9 @@ def train(args):
     audio_model_lr = args.audio_model_lr  # learning rate for audio model
     generator_lr = args.generator_lr  # learning rate for audio generator
 
-    v_model = Video(n_channels, height, width, n_frames)
-    u_model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet', in_channels=1, out_channels=n_channels, init_features=32, pretrained=audio_pretrained)
-    g_model = Generator(n_channels)
+    v_model = Video(n_channels, height, width, n_frames).to(device)
+    u_model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet', in_channels=1, out_channels=n_channels, init_features=32, pretrained=audio_pretrained).to(device)
+    g_model = Generator(n_channels).to(device)
 
     opt_v = optim.SGD(v_model.parameters(), lr=video_model_lr)
     opt_u = optim.SGD(u_model.parameters(), lr=audio_model_lr)
@@ -104,15 +104,15 @@ def train(args):
     if args.load_saved:
         try:
             start_epoch = torch.load(path_epoch)
-            u_model = torch.load(path_u.format(start_epoch))
-            v_model = torch.load(path_v.format(start_epoch))
-            g_model = torch.load(path_g.format(start_epoch))
+            u_model = torch.load(path_u.format(start_epoch)).to(device)
+            v_model = torch.load(path_v.format(start_epoch)).to(device)
+            g_model = torch.load(path_g.format(start_epoch)).to(device)
         except Exception as e:
             print('Loading failed')
-            v_model = Video(n_channels, height, width, n_frames)
+            v_model = Video(n_channels, height, width, n_frames).to(device)
             u_model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet', in_channels=1,
-                                     out_channels=n_channels, init_features=32, pretrained=audio_pretrained)
-            g_model = Generator(n_channels)
+                                     out_channels=n_channels, init_features=32, pretrained=audio_pretrained).to(device)
+            g_model = Generator(n_channels).to(device)
             start_epoch = 0
 
     if device.type == 'cuda' and n_gpu > 1:
