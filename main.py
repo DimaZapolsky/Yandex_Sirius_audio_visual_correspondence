@@ -139,9 +139,10 @@ def train(args):
                 g_res = g_model(v_res, u_res)  # (bs, x, y, t, freq)
 
                 audio_s = audio_sum.squeeze(1)
-                model_answer = torch.mul(g_res, audio_s[:, None, None, :, :])  # (bs, x, y, t, freq) * (bs, t, freq)
+                #model_answer = torch.mul(g_res, audio_s[:, None, None, :, :])  # (bs, x, y, t, freq) * (bs, t, freq)
+                model_answer = g_res
 
-                loss = criterion(torch.sum(model_answer, [1, 2]), data[1][:, i, :] / audio_sum)
+                loss = criterion(torch.sum(model_answer, [1, 2]), (data[1][:, i, :] / audio_sum).squeeze(1))
                 losses.append(loss.data.item())
                 loss.backward()
 
@@ -149,9 +150,7 @@ def train(args):
                 opt_u.step()
                 opt_g.step()
 
-                print('batch: {}   |   loss: {}    |    average time for batch: {}'.format(batch_n, loss.data.item(),
-                                                                (time.time() - start_time) / (batch_n + 1)))
-
+            print('average time per batch: {}'.format((time.time() - start_time) / (batch_n + 1)))
             loss_train.append(np.array(losses).mean())
 
             if (batch_n + 1) % print_loss_freq == 0:
@@ -173,15 +172,8 @@ def train(args):
                 loss_test.append(np.array(test_loss).mean())
                 print('epoch [%d/%d]\t batch [%d/%d]\t. Train loss: %d,\t test loss: %d' % (epoch, n_epoch, batch_n, batch_count, np.array(losses).mean(), np.array(test_loss).mean()))
 
-            if (batch_n + 1) % save_freq == 0:
-                print('Saving model')
-                torch.save(u_model, path_u.format(epoch))
-                torch.save(v_model, path_v.format(epoch))
-                torch.save(g_model, path_g.format(epoch))
-                torch.save(epoch, path_epoch)
-                print('Model saved')
-
             if (batch_n + 1) % example_freq == 0:
+                continue
                 with torch.no_grad():
                     picture = data[0][-1, 0, :, :, :, -1]
                     video = data[0][-1:, 0, :, :, :, :]
@@ -216,6 +208,14 @@ def train(args):
                     fig = plt.figure(figsize=(8,8))
                     plt.axis("off")
                     plt.imshow(np.transpose(output.numpy(), (1, 2, 0)))
+
+        if (epoch + 1) % save_freq == 0:
+            print('Saving model')
+            torch.save(u_model, path_u.format(epoch))
+            torch.save(v_model, path_v.format(epoch))
+            torch.save(g_model, path_g.format(epoch))
+            torch.save(epoch, path_epoch)
+            print('Model saved')
 
 
 def main():
