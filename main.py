@@ -137,7 +137,9 @@ def train(args):
                 u_res = u_model(audio_sum)
                 v_res = v_model(video)
                 g_res = g_model(v_res, u_res)  # (bs, x, y, t, freq)
-                model_answer = torch.mul(g_res, audio_sum[:, None, None, :, :])  # (bs, x, y, t, freq) * (bs, t, freq)
+
+                audio_s = audio_sum.squeeze(1)
+                model_answer = torch.mul(g_res, audio_s[:, None, None, :, :])  # (bs, x, y, t, freq) * (bs, t, freq)
 
                 loss = criterion(torch.sum(model_answer, [1, 2]), data[1][:, i, :] / audio_sum)
                 losses.append(loss.data.item())
