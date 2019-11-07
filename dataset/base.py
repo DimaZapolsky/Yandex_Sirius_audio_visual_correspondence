@@ -1,7 +1,7 @@
 import torch
 import os
 from scipy.signal import stft
-from .. import utils
+from . import utils
 import random
 import numpy as np
 
@@ -38,10 +38,10 @@ class Dataset(torch.utils.data.Dataset):
     def get_sg(self, audio):
         data = stft(audio, nperseg=self.window_len, noverlap=self.overlap_len)
         data = data[2]
-        data = np.abs(data).astype(np.float64)
+        data = torch.Tensor(np.abs(data).astype(np.float64))
+        data = data[:, :(data.shape[1] // 16) * 16]
         data = utils.transform(data)
-        data = torch.Tensor(data)
-        return data
+        return data[None, :, :]
 
     def get_one_item(self, index):
         # video and sound are assumed to be in corresponding directories
@@ -52,6 +52,8 @@ class Dataset(torch.utils.data.Dataset):
         begin = random.uniform(0, video_len_sec - self.fragment_len)
         video = video[int(begin * self.fps):int(begin * self.fps) + int(self.fragment_len * self.fps)]
         audio = audio[int(begin * self.frequency):int(begin * self.frequency) + int(self.fragment_len * self.frequency)]
+        if audio.shape[0] != int(self.fragment_len * self.frequency) or video.shape[0] != int(self.fragment_len * self.fps):
+            return self.get_one_item(random.randint(0, self.dataset_size - 1))
 
         return video, audio, self.get_sg(audio)
 

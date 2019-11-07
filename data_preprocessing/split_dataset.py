@@ -23,7 +23,6 @@ def split_dataset(args):
     solo_cnt = 0
     duet_cnt = 0
     for file in os.listdir(os.path.join(video_src_path, 'solo/')):
-        print(file)
         if file.endswith('.pt'):
             solo_cnt += 1
 
@@ -52,7 +51,7 @@ def split_dataset(args):
         os.system('mv {} {}'.format(os.path.join(audio_src_path, 'solo/', str(solo_ind[i]) + '.pt'),
                                     os.path.join(audio_dst_path, 'dev/', str(i) + '.pt')))
 
-    for i in range(args.dev_solo, args.test_solo):
+    for i in range(args.dev_solo, args.dev_solo + args.test_solo):
         os.system('mv {} {}'.format(os.path.join(video_src_path, 'solo/', str(solo_ind[i]) + '.pt'),
                                     os.path.join(video_dst_path, 'test/', str(i - args.dev_solo) + '.pt')))
         os.system('mv {} {}'.format(os.path.join(audio_src_path, 'solo/', str(solo_ind[i]) + '.pt'),
@@ -70,7 +69,7 @@ def split_dataset(args):
         os.system('mv {} {}'.format(os.path.join(audio_src_path, 'duet/', str(duet_ind[i]) + '.pt'),
                                     os.path.join(audio_dst_path, 'dev/', str(i + args.dev_solo) + '.pt')))
 
-    for i in range(args.dev_duet, args.test_duet):
+    for i in range(args.dev_duet, args.test_duet + args.dev_duet):
         os.system('mv {} {}'.format(os.path.join(video_src_path, 'duet/', str(duet_ind[i]) + '.pt'),
                                     os.path.join(video_dst_path, 'test/', str(i - args.dev_duet + args.test_solo) + '.pt')))
         os.system('mv {} {}'.format(os.path.join(audio_src_path, 'duet/', str(duet_ind[i]) + '.pt'),
@@ -80,11 +79,11 @@ def split_dataset(args):
         os.system('mv {} {}'.format(os.path.join(video_src_path, 'duet/', str(duet_ind[i]) + '.pt'),
                                     os.path.join(video_dst_path, 'train/', str(i - args.dev_duet - args.test_duet
                                                                                + solo_cnt - args.dev_solo
-                                                                               - args.test_solo) + '.pt'))
+                                                                               - args.test_solo) + '.pt')))
         os.system('mv {} {}'.format(os.path.join(audio_src_path, 'duet/', str(duet_ind[i]) + '.pt'),
                                     os.path.join(audio_dst_path, 'train/', str(i - args.dev_duet - args.test_duet
                                                                                + solo_cnt - args.dev_solo
-                                                                               - args.test_solo) + '.pt'))
+                                                                               - args.test_solo) + '.pt')))
 
 
 def main():
