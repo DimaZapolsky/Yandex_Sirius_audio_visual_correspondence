@@ -8,7 +8,7 @@ def transform(input, batch_format=False, log_base=21):
     x, y = input.shape[-2:]
 
     if batch_format:
-        if (len(input.shape) == 3):
+        if len(input.shape) == 3:
             input = input[:, None, :, :]
     elif len(input.shape) == 3:
         input = input[None, :, :, :]
