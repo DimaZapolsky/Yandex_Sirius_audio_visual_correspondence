@@ -6,6 +6,7 @@ import numpy as np
 
 def transform(input, batch_format=False, log_base=21):
     x, y = input.shape[-2:]
+
     if batch_format:
         if (len(input.shape) == 3):
             input = input[:, None, :, :]
@@ -17,7 +18,7 @@ def transform(input, batch_format=False, log_base=21):
     xl = np.linspace(-1, 1, y)
     yl = np.linspace(-1, 1, y)
 
-    xl = (np.power(lo_basee, (xl + 1) / 2) - (log_base // 2 + 1)) / (log_base // 2)
+    xl = (np.power(log_base, (xl + 1) / 2) - (log_base // 2 + 1)) / (log_base // 2)
 
     xv, yv = np.meshgrid(xl, yl)
 
@@ -25,6 +26,6 @@ def transform(input, batch_format=False, log_base=21):
     x_out[:, :, :, 0] = torch.from_numpy(xv)
     x_out[:, :, :, 1] = torch.from_numpy(yv)
 
-    return F.grid_sample(input, x_out)
+    return F.grid_sample(input, x_out).squeeze()
 
 
