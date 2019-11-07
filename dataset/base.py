@@ -45,8 +45,8 @@ class Dataset(torch.utils.data.Dataset):
 
     def get_one_item(self, index):
         # video and sound are assumed to be in corresponding directories
-        video = torch.load(os.path.join(self.video_dir, '{}.pt'.format(self.load_order[index])))
-        audio = torch.load(os.path.join(self.audio_dir, '{}.pt'.format(self.load_order[index])))
+        video = torch.Tensor(torch.load(os.path.join(self.video_dir, '{}.pt'.format(self.load_order[index]))))
+        audio = torch.Tensor(torch.load(os.path.join(self.audio_dir, '{}.pt'.format(self.load_order[index]))))
 
         video_len_sec = video.shape[0] / self.fps
         begin = random.uniform(0, video_len_sec - self.fragment_len)
