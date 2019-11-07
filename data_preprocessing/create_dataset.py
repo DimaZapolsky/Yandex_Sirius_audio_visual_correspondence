@@ -8,6 +8,7 @@ from scipy.io import wavfile
 import numpy as np
 from PIL import Image
 from scipy.signal import stft
+import time
 
 
 def parse_args():
@@ -26,13 +27,14 @@ def parse_args():
 
 def create_dataset_videos(args, src_path, dst_path):
     os.makedirs(dst_path, exist_ok=True)
+
     for file in os.listdir(src_path):
         if not os.path.isfile(os.path.join(src_path, file)) or not file.endswith('.mp4'):
             continue
+        start_time = time.time()
         capture = cv2.VideoCapture(os.path.join(src_path, file))
         src_fps = capture.get(cv2.CAP_PROP_FPS)
         vid_frames = []
-
         i = 0
         j = 0
         while True:
@@ -46,9 +48,11 @@ def create_dataset_videos(args, src_path, dst_path):
             i += 1
 
         vid_frames = np.asarray(vid_frames, dtype='uint8')
-        vid_frames = torch.Tensor(vid_frames)
+        vid_frames = torch.Tensor(vid_frames, dtype=torch.uint8)
         capture.release()
+        print('TIME =', time.time() - start_time)
         torch.save(vid_frames, os.path.join(dst_path, file.split('.')[0] + '.pt'))
+        print('TIME =', time.time() - start_time)
 
 
 def stereo_to_mono(wave):
