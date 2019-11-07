@@ -58,6 +58,7 @@ def train(args):
     audio_pretrained = args.pretrained_audio
     n_gpu = args.gpu_count
     device = torch.device("cuda:0" if (torch.cuda.is_available() and n_gpu > 0) else "cpu")
+    print(device)
 
     data_loader = DataLoader(Dataset(height=height, width=width,
             fps=args.fps, frequency=args.freq, fragment_len=args.fragment_len, batch_size=batch_size,
