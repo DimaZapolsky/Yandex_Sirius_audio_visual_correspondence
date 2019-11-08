@@ -68,7 +68,7 @@ class Generator(nn.Module):
         input_V_flattened = input_V_flattened * self.weights
         x = input_V_flattened @ input_A_flattened + self.bias
 
-        x = self.activation(x)
+        #x = self.activation(x)
         return x.view((-1,) + inputV.shape[-2:] + inputA.shape[-2:])  # x.shape = [bs, h // 16, w // 16, audH, audW]
 
 
