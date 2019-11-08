@@ -151,9 +151,11 @@ def train(args):
                 opt_u.step()
                 opt_g.step()
 
-                print('batch: {}   |   loss: {}'.format(batch_n, loss.data.item() / batch_size))
+            if (batch_n + 1) % print_loss_freq == 0:
+                print('batch: {}   |   loss: {}'.format(batch_n, np.array(losses).mean()))
 
-            print('average time per batch: {}'.format((time.time() - start_time) / (batch_n + 1)))
+            if (batch_n + 1) % print_loss_freq == 0:
+                print('average time per batch: {}'.format((time.time() - start_time) / (batch_n + 1)))
             loss_train.append(np.array(losses).mean())
 
             if (batch_n + 1) % print_loss_freq == 0:
