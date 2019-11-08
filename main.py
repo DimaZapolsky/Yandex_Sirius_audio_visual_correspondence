@@ -170,10 +170,9 @@ def train(args):
                 opt_g.step()
 
             if (batch_n + 1) % print_loss_freq == 0:
-                print('batch: {}   |   loss: {}'.format(batch_n, np.array(losses).mean()))
+                print('batch: {:<10}   |   loss: {:<10}    |    average time per batch: {:<20}'.format(batch_n + 1, np.array(losses).mean(), (time.time() - start_time) / (batch_n + 1)))
+                print(g_model.weight, file=open('log.txt', 'w'))
 
-            if (batch_n + 1) % print_loss_freq == 0:
-                print('average time per batch: {}'.format((time.time() - start_time) / (batch_n + 1)))
             loss_train.append(np.array(losses).mean())
 
             if (batch_n + 1) % print_loss_freq == 0:
