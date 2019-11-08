@@ -52,16 +52,23 @@ class Generator(nn.Module):
 
         self.n_channels = n_channels
 
-        self.main = nn.Linear(n_channels, 1)
+        self.weights = nn.Parameter(torch.Tensor(1, 1, 1, n_channels))
+        self.bias = nn.Parameter(torch.Tensor(1))
 
         self.activation = nn.Sigmoid()
 
+        nn.init.constant_(self.weights, 1)
+        nn.init.constant_(self.bias, 0)
+
     def forward(self, inputV, inputA):  # inputV.shape = [bs, K, h // 16, w // 16], inputA.shape = [bs, K, audH, audW]
-        x = inputV[:, :, :, :, None, None] * inputA[:, :, None, None, :, :]
-        x = x.permute((0, 2, 3, 4, 5, 1))
-        x = self.main(x).squeeze(5)
+        input_V_flattened = inputV.view(inputV.shape[0], self.n_channels, -1)
+        input_A_flattened = inputA.view(inputA.shape[0], self.n_channels, -1)
+
+        input_V_flattened = input_V_flattened.permute([0, 2, 1])
+        input_V_flattened = input_V_flattened * self.weights
+        x = input_V_flattened @ input_A_flattened + self.bias
 
         x = self.activation(x)
-        return x  # x.shape = [bs, h // 16, w // 16, audH, audW]
+        return x.view((-1,) + inputV.shape[-2:] + inputA.shape[-2:])  # x.shape = [bs, h // 16, w // 16, audH, audW]
 
 
