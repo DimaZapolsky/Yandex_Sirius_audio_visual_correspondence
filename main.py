@@ -76,14 +76,6 @@ def train(args):
     audio_model_lr = args.audio_model_lr  # learning rate for audio model
     generator_lr = args.generator_lr  # learning rate for audio generator
 
-    v_model = Video(n_channels, height, width, n_frames).to(device)
-    u_model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet', in_channels=1, out_channels=n_channels, init_features=32, pretrained=audio_pretrained).to(device)
-    g_model = Generator(n_channels).to(device)
-
-    opt_v = optim.SGD(v_model.parameters(), lr=video_model_lr)
-    opt_u = optim.SGD(u_model.parameters(), lr=audio_model_lr)
-    opt_g = optim.SGD(g_model.parameters(), lr=generator_lr)
-
     criterion = nn.L1Loss().to(device)
 
     print_loss_freq = args.print_loss_freq  # print loss every print_loss_freq batches.
@@ -108,13 +100,33 @@ def train(args):
             u_model = torch.load(path_u.format(start_epoch)).to(device)
             v_model = torch.load(path_v.format(start_epoch)).to(device)
             g_model = torch.load(path_g.format(start_epoch)).to(device)
+            opt_v = optim.SGD(v_model.parameters(), lr=video_model_lr)
+            opt_u = optim.SGD(u_model.parameters(), lr=audio_model_lr)
+            opt_g = optim.SGD(g_model.parameters(), lr=generator_lr)
+
         except Exception as e:
             print('Loading failed')
             v_model = Video(n_channels, height, width, n_frames).to(device)
             u_model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet', in_channels=1,
                                      out_channels=n_channels, init_features=32, pretrained=audio_pretrained).to(device)
             g_model = Generator(n_channels).to(device)
+
+            opt_v = optim.SGD(v_model.parameters(), lr=video_model_lr)
+            opt_u = optim.SGD(u_model.parameters(), lr=audio_model_lr)
+            opt_g = optim.SGD(g_model.parameters(), lr=generator_lr)
+
             start_epoch = 0
+    else:
+        v_model = Video(n_channels, height, width, n_frames).to(device)
+        u_model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet', in_channels=1,
+                                 out_channels=n_channels, init_features=32, pretrained=audio_pretrained).to(device)
+        g_model = Generator(n_channels).to(device)
+
+        opt_v = optim.SGD(v_model.parameters(), lr=video_model_lr)
+        opt_u = optim.SGD(u_model.parameters(), lr=audio_model_lr)
+        opt_g = optim.SGD(g_model.parameters(), lr=generator_lr)
+
+        start_epoch = 0
 
     if device.type == 'cuda' and n_gpu > 1:
         u_model = nn.DataParallel(u_model, list(range(n_gpu)))
@@ -141,13 +153,14 @@ def train(args):
 
                 audio_s = audio_sum.squeeze(1)
                 #model_answer = torch.mul(g_res, audio_s[:, None, None, :, :])  # (bs, x, y, t, freq) * (bs, t, freq)
-                model_answer = torch.sum(g_res, [1, 2])
 
+                model_answer = torch.mean(g_res, [1, 2])
+
+                print(model_answer)
                 model_answer = torch.sigmoid(model_answer)
 
                 weight = torch.log1p(audio_sum)
                 weight = torch.clamp(weight, 1e-3, 10)
-
 
                 loss = criterion(model_answer, (data[1][:, i, :].to(device) / audio_sum).squeeze(1).to(device) / weight).to(device)
                 losses.append(loss.data.item())
@@ -156,7 +169,7 @@ def train(args):
                 opt_v.step()
                 opt_u.step()
                 opt_g.step()
-
+                
             if (batch_n + 1) % print_loss_freq == 0:
                 print('batch: {}   |   loss: {}'.format(batch_n, np.array(losses).mean()))
 

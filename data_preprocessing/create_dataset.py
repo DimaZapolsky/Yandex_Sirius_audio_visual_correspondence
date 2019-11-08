@@ -47,12 +47,12 @@ def create_dataset_videos(args, src_path, dst_path):
                 j += 1
             i += 1
 
-        vid_frames = np.asarray(vid_frames, dtype='uint8')
+        vid_frames = np.asarray(vid_frames, dtype=np.uint8)
         vid_frames = torch.ByteTensor(vid_frames)
         capture.release()
 
         torch.save(vid_frames, os.path.join(dst_path, file.split('.')[0] + '.pt'))
-        
+
 
 def stereo_to_mono(wave):
     return (wave[:, 0] + wave[:, 1]) // 2
