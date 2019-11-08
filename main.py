@@ -84,7 +84,7 @@ def train(args):
     opt_u = optim.SGD(u_model.parameters(), lr=audio_model_lr)
     opt_g = optim.SGD(g_model.parameters(), lr=generator_lr)
 
-    criterion = nn.L1Loss()
+    criterion = nn.L1Loss().to(device)
 
     print_loss_freq = args.print_loss_freq  # print loss every print_loss_freq batches.
 
