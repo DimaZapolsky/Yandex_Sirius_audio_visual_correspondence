@@ -55,7 +55,7 @@ class Dataset(torch.utils.data.Dataset):
         if audio.shape[0] != int(self.fragment_len * self.frequency) or video.shape[0] != int(self.fragment_len * self.fps):
             return self.get_one_item(random.randint(0, self.dataset_size - 1))
 
-        return video, audio, self.get_sg(audio)
+        return video, audio
 
     def __getitem__(self, index):
         videos = []
@@ -63,12 +63,12 @@ class Dataset(torch.utils.data.Dataset):
         w_sum = None
 
         for i in range(self.n_fragments):
-            video, wave, audio_sg = self.get_one_item((index + i) % self.dataset_size)
+            video, wave = self.get_one_item((index + i) % self.dataset_size)
             videos.append(video)
-            audios.append(audio_sg)
+            audios.append(self.get_sg(wave / self.n_fragments))
             w_sum = wave if w_sum is None else w_sum + wave
 
-        return torch.stack(videos), torch.stack(audios), self.get_sg(w_sum)
+        return torch.stack(videos), torch.stack(audios), self.get_sg(w_sum / self.n_fragments)
 
     def __len__(self):
         return self.dataset_size
