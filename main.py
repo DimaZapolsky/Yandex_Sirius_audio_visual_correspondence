@@ -156,7 +156,6 @@ def train(args):
 
                 model_answer = torch.mean(g_res, [1, 2])
 
-                print(model_answer)
                 model_answer = torch.sigmoid(model_answer)
 
                 weight = torch.log1p(audio_sum)
@@ -169,7 +168,7 @@ def train(args):
                 opt_v.step()
                 opt_u.step()
                 opt_g.step()
-                
+
             if (batch_n + 1) % print_loss_freq == 0:
                 print('batch: {}   |   loss: {}'.format(batch_n, np.array(losses).mean()))
 
