@@ -147,7 +147,7 @@ def train(args):
                 losses.append(loss.data.item())
                 loss.backward()
                 
-                print(g_model.activation.weight.grad.cpu().data().numpy().mean())
+                print(g_model.activation.grad.cpu().data().numpy().mean())
 
                 opt_v.step()
                 opt_u.step()
