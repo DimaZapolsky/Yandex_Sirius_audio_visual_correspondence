@@ -149,7 +149,7 @@ def train(args):
                 weight = torch.clamp(weight, 1e-3, 10)
 
 
-                loss = criterion(model_answer, (data[1][:, i, :].to(device) / audio_sum).squeeze(1).to(device), weight).to(device)
+                loss = criterion(model_answer, (data[1][:, i, :].to(device) / audio_sum).squeeze(1).to(device) / weight).to(device)
                 losses.append(loss.data.item())
                 loss.backward()
 
