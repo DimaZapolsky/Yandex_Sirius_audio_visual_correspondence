@@ -143,7 +143,7 @@ def train(args):
                 #model_answer = torch.mul(g_res, audio_s[:, None, None, :, :])  # (bs, x, y, t, freq) * (bs, t, freq)
                 model_answer = g_res
 
-                loss = criterion(torch.sum(model_answer, [1, 2]), (data[1][:, i, :] / audio_sum).squeeze(1))
+                loss = criterion(torch.sum(model_answer, [1, 2]), (data[1][:, i, :] / audio_sum).squeeze(1).to(device))
                 losses.append(loss.data.item())
                 loss.backward()
 
