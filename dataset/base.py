@@ -49,6 +49,9 @@ class Dataset(torch.utils.data.Dataset):
         video -= (torch.mean(video, [1, 2]) - mean)[:, None, None, :]
         return video
 
+    def normalize_video_2(self, video, **kwargs):
+        return video / 255
+
     def get_one_item(self, index):
         # video and sound are assumed to be in corresponding directories
         video = torch.load(os.path.join(self.video_dir, '{}.pt'.format(self.load_order[index]))).type(torch.Tensor)
@@ -66,7 +69,7 @@ class Dataset(torch.utils.data.Dataset):
         #     torch.nn.functional.normalize(video[i], [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         #     video[i] = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(video[i])
 
-        return self.normalize_video(video, mean=torch.Tensor([0.485, 0.456, 0.406]), std=torch.Tensor([0.229, 0.224, 0.225])), audio
+        return self.normalize_video_2(video, mean=torch.Tensor([0.485, 0.456, 0.406]), std=torch.Tensor([0.229, 0.224, 0.225])), audio
 
     def __getitem__(self, index):
         videos = []
