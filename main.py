@@ -146,6 +146,8 @@ def train(args):
                 loss = criterion(torch.sum(model_answer, [1, 2]).to(device), (data[1][:, i, :].to(device) / audio_sum).squeeze(1).to(device)).to(device)
                 losses.append(loss.data.item())
                 loss.backward()
+                
+                print(g_model.activation.weight.grad.cpu().data().numpy().mean())
 
                 opt_v.step()
                 opt_u.step()
