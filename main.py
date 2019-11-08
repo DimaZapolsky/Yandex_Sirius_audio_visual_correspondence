@@ -158,7 +158,7 @@ def train(args):
 
                 model_answer = torch.sigmoid(model_answer)
 
-                weight = torch.log1p(audio_sum)
+                weight = torch.log1p(audio_sum.squeeze(1))
                 weight = torch.clamp(weight, 1e-3, 10)
 
                 loss = criterion(model_answer, (data[1][:, i, :].to(device) / audio_sum).squeeze(1).to(device) / weight).to(device)
