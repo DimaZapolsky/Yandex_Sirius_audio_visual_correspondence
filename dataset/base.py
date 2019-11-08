@@ -4,6 +4,7 @@ from scipy.signal import stft
 from . import utils
 import random
 import numpy as np
+from torchvision import transforms
 
 
 class Dataset(torch.utils.data.Dataset):
@@ -43,6 +44,11 @@ class Dataset(torch.utils.data.Dataset):
         data = utils.transform(data)
         return data[None, :, :]
 
+    def normalize_video(self, video, mean, std):
+        video *= (std / torch.std(video, [1, 2]))[:, None, None, :]
+        video -= (torch.mean(video, [1, 2]) - mean)[:, None, None, :]
+        return video
+
     def get_one_item(self, index):
         # video and sound are assumed to be in corresponding directories
         video = torch.load(os.path.join(self.video_dir, '{}.pt'.format(self.load_order[index]))).type(torch.Tensor)
@@ -55,7 +61,12 @@ class Dataset(torch.utils.data.Dataset):
         if audio.shape[0] != int(self.fragment_len * self.frequency) or video.shape[0] != int(self.fragment_len * self.fps):
             return self.get_one_item(random.randint(0, self.dataset_size - 1))
 
-        return video, audio
+        # for i in range(video.shape[0]):
+        #     video[i] = video[i].permute([2, 0, 1])
+        #     torch.nn.functional.normalize(video[i], [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        #     video[i] = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(video[i])
+
+        return self.normalize_video(video, mean=torch.Tensor([0.485, 0.456, 0.406]), std=torch.Tensor([0.229, 0.224, 0.225])), audio
 
     def __getitem__(self, index):
         videos = []

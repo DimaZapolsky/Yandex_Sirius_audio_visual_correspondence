@@ -138,7 +138,8 @@ def train(args):
     for epoch in range(start_epoch, n_epoch):
         start_time = time.time()
         for batch_n, data in enumerate(data_loader, 0):
-            audio_sum = data[2].to(device)
+            audio_sum = data[2].to(device) + 1e-10
+
             losses = []
             for i in range(n_video):
                 u_model.zero_grad()
@@ -148,10 +149,11 @@ def train(args):
                 video = data[0][:, i].to(device)
 
                 u_res = u_model(audio_sum)
+
+                video = video.permute([0, 1, 4, 2, 3])
                 v_res = v_model(video)
                 g_res = g_model(v_res, u_res)  # (bs, x, y, t, freq)
 
-                audio_s = audio_sum.squeeze(1)
                 #model_answer = torch.mul(g_res, audio_s[:, None, None, :, :])  # (bs, x, y, t, freq) * (bs, t, freq)
 
                 model_answer = torch.mean(g_res, [1, 2])
@@ -161,9 +163,14 @@ def train(args):
                 weight = torch.log1p(audio_sum.squeeze(1))
                 weight = torch.clamp(weight, 1e-3, 10)
 
-                loss = criterion(model_answer, (data[1][:, i, :].to(device) / audio_sum).squeeze(1).to(device) / weight).to(device)
+                print('VAR:', g_model.weights)
+                print('VAR:', g_model.bias)
+                loss = criterion((model_answer * audio_sum).squeeze(1), data[1][:, i, :].to(device).squeeze(1).to(device) / weight).to(device)
                 losses.append(loss.data.item())
                 loss.backward()
+                print('LOSS:', loss.data.item())
+                print('GRAD:', g_model.weights.grad)
+                print('GRAD:', g_model.bias.grad)
 
                 opt_v.step()
                 opt_u.step()
