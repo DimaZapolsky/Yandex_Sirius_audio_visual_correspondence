@@ -165,7 +165,7 @@ def train(args):
 
                 print('VAR:', g_model.weights)
                 print('VAR:', g_model.bias)
-                loss = criterion((model_answer * audio_sum).squeeze(1), data[1][:, i, :].to(device).squeeze(1).to(device) / weight).to(device)
+                loss = criterion((model_answer * audio_sum.squeeze(1)).squeeze(1), data[1][:, i, :].to(device).squeeze(1).to(device) / weight).to(device)
                 losses.append(loss.data.item())
                 loss.backward()
                 print('LOSS:', loss.data.item())
