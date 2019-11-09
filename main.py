@@ -196,7 +196,7 @@ def train(args):
                         g_res = g_model(v_res, u_res)
 
                         loss = criterion((g_res * audio_sum.squeeze(1)).squeeze(1),
-                                         data[1][:, i, :].to(device).squeeze(1).to(device)).to(device)
+                                         test_data[1][:, i, :].to(device).squeeze(1).to(device)).to(device)
                         test_loss.append(loss.data.item())
 
             loss_test.append(np.array(test_loss).mean())
