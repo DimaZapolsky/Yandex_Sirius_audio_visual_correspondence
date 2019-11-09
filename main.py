@@ -76,7 +76,7 @@ def train(args):
     audio_model_lr = args.audio_model_lr  # learning rate for audio model
     generator_lr = args.generator_lr  # learning rate for audio generator
 
-    criterion = nn.L1Loss().to(device)
+    criterion = nn.BCELoss().to(device)
 
     print_loss_freq = args.print_loss_freq  # print loss every print_loss_freq batches.
 
@@ -164,7 +164,7 @@ def train(args):
                 v_res = v_model(video)
                 g_res = g_model(v_res, u_res)
 
-                loss = criterion((g_res * audio_sum.squeeze(1)).squeeze(1), data[1][:, i, :].to(device).squeeze(1).to(device)).to(device)
+                loss = criterion((g_res).squeeze(1), (data[1][:, i, :].squeeze(1) > data[1][:, 1 - i, :].squeeze(1)).to(device)).to(device)
                 losses.append(loss.data.item())
                 loss.backward()
 

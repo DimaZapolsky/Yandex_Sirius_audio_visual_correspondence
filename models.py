@@ -75,9 +75,9 @@ class Generator(nn.Module):
         x = x.view((-1,) + inputV.shape[-2:] + inputA.shape[-2:])
         x = torch.mean(x, [1, 2])
 
-        x = torch.sigmoid(x) * self.tuner
+        #x = torch.sigmoid(x) #  * self.tuner
 
-        #x = self.activation(x)
+        x = self.activation(x)
         return x # x.shape = [bs, audH, audW]
 
 
