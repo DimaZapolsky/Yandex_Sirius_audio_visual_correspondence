@@ -38,7 +38,7 @@ class Dataset(torch.utils.data.Dataset):
         self.n_fragments = n_fragments
 
     def get_sg(self, audio):
-        #data = stft(audio, nperseg=self.window_len, noverlap=self.overlap_len)
+        # data = stft(audio, nperseg=self.window_len, noverlap=self.overlap_len)
         data = librosa.stft(audio.numpy(), n_fft=self.window_len, hop_length=self.window_len - self.overlap_len)
         data = torch.Tensor(np.abs(data).astype(np.float32))
         data = data[:, :(data.shape[1] // 16) * 16]
