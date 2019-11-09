@@ -200,7 +200,7 @@ def train(args):
                         test_loss.append(loss.data.item())
 
             loss_test.append(np.array(test_loss).mean())
-            print('epoch [%d/%d]\t batch [%d/%d]\t. Test loss: %d' % (epoch, n_epoch, batch_n, batch_count, np.array(test_loss).mean()))
+            print('epoch [%d/%d]\t Test loss: %d' % (epoch, n_epoch, np.array(test_loss).mean()))
 
             # if (batch_n + 1) % example_freq == 0:
             #     continue
