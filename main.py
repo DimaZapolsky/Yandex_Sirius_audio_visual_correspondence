@@ -43,6 +43,7 @@ def parse_args():
     parser.add_argument('--gpu-count', default=1, type=int, help='Number of gpu')
     parser.add_argument('--batch-size', default=64, type=int, help='Size of batch')
     parser.add_argument('--pretrained-audio', default=False, type=bool, help='Pretrain U-net model')
+    parser.add_argument('--dev-loss-freq', default=1, type=int, help='Number of epochs to print dev loss')
     args = parser.parse_args()
     return args
 
@@ -136,7 +137,7 @@ def train(args):
     loss_test = []
     for epoch in range(start_epoch, n_epoch):
         start_time = time.time()
-        print('epoch: {}'.format(epoch))
+        print('\nepoch: {}\n'.format(epoch))
         for batch_n, data in enumerate(data_loader, 0):
             audio_sum = data[2].to(device) + 1e-10
 
@@ -200,7 +201,7 @@ def train(args):
                         test_loss.append(loss.data.item())
 
             loss_test.append(np.array(test_loss).mean())
-            print('epoch [{}/{}]\t Test loss: {}' % (epoch, n_epoch, np.array(test_loss).mean()))
+            print('epoch [{} / {}]\t Test loss: {}'.format(epoch, n_epoch, np.array(test_loss).mean()))
 
             # if (batch_n + 1) % example_freq == 0:
             #     continue
