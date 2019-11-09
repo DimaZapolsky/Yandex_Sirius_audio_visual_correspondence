@@ -94,6 +94,8 @@ def train(args):
 
     start_epoch = 0
 
+    Audio(n_channels).to(device)
+
     if args.load_saved:
         try:
             start_epoch = torch.load(path_epoch)
@@ -146,6 +148,15 @@ def train(args):
 
                 video = data[0][:, i].to(device)
 
+                # print('tut')
+                # print(audio_sum.mean())
+                # print(audio_sum.min())
+                # print(audio_sum.max())
+                #
+                # plt.imsave(
+                #     fname='spectrogram.png',
+                #     arr=audio_sum.squeeze() / audio_sum.max(),
+                # )
                 u_res = u_model(audio_sum)
 
                 video = video.permute([0, 1, 4, 2, 3])

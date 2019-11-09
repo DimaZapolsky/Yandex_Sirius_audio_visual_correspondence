@@ -1,6 +1,7 @@
 import torch
 import os
 from scipy.signal import stft
+import librosa
 from . import utils
 import random
 import numpy as np
@@ -37,9 +38,9 @@ class Dataset(torch.utils.data.Dataset):
         self.n_fragments = n_fragments
 
     def get_sg(self, audio):
-        data = stft(audio, nperseg=self.window_len, noverlap=self.overlap_len)
-        data = data[2]
-        data = torch.Tensor(np.abs(data).astype(np.float64))
+        #data = stft(audio, nperseg=self.window_len, noverlap=self.overlap_len)
+        data = librosa.stft(audio.numpy(), n_fft=self.window_len, hop_length=self.window_len - self.overlap_len)
+        data = torch.Tensor(np.abs(data).astype(np.float32))
         data = data[:, :(data.shape[1] // 16) * 16]
         data = utils.transform(data)
         return data[None, :, :]
@@ -64,11 +65,6 @@ class Dataset(torch.utils.data.Dataset):
         audio = audio[int(begin * self.frequency):int(begin * self.frequency) + int(self.fragment_len * self.frequency)]
         if audio.shape[0] != int(self.fragment_len * self.frequency) or video.shape[0] != int(self.fragment_len * self.fps) or begin < 0:
             return self.get_one_item(random.randint(0, self.dataset_size - 1))
-
-        # for i in range(video.shape[0]):
-        #     video[i] = video[i].permute([2, 0, 1])
-        #     torch.nn.functional.normalize(video[i], [0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        #     video[i] = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(video[i])
 
         return self.normalize_video_2(video, mean=torch.Tensor([0.485, 0.456, 0.406]), std=torch.Tensor([0.229, 0.224, 0.225])), audio
 

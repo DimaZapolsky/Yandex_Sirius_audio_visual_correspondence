@@ -9,6 +9,7 @@ from PIL import Image
 from scipy.signal import stft
 import time
 import torchvision
+import librosa
 
 
 def parse_args():
@@ -64,10 +65,9 @@ def create_dataset_audios(args, src_path, dst_path):
     for file in os.listdir(src_path):
         if not os.path.isfile(os.path.join(src_path, file)) or not file.endswith('.wav'):
             continue
-        fs, data = wavfile.read(os.path.join(src_path, file))
+        data, fs = librosa.load(os.path.join(src_path, file), sr=args.freq)
         if len(data.shape) > 1:
             data = stereo_to_mono(data)
-
         data = torch.Tensor(data)
         torch.save(data, os.path.join(dst_path, file.split('.')[0] + '.pt'))
 
