@@ -107,8 +107,7 @@ def train(args):
         except Exception as e:
             print('Loading failed')
             v_model = Video(n_channels, height, width, n_frames).to(device)
-            u_model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet', in_channels=1,
-                                     out_channels=n_channels, init_features=32, pretrained=audio_pretrained).to(device)
+            u_model = Audio(n_channels).to(device)
             g_model = Generator(n_channels).to(device)
 
             opt_v = optim.SGD(v_model.parameters(), lr=video_model_lr)
@@ -118,8 +117,7 @@ def train(args):
             start_epoch = 0
     else:
         v_model = Video(n_channels, height, width, n_frames).to(device)
-        u_model = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet', in_channels=1,
-                                 out_channels=n_channels, init_features=32, pretrained=audio_pretrained).to(device)
+        u_model = Audio(n_channels).to(device)
         g_model = Generator(n_channels).to(device)
 
         opt_v = optim.SGD(v_model.parameters(), lr=video_model_lr)
