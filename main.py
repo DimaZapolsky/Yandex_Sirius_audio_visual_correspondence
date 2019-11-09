@@ -186,8 +186,6 @@ def train(args):
             with torch.no_grad():
                 for test_batch_n, test_data in enumerate(data_test_loader, 0):
                     audio_sum = data[2].to(device) + 1e-10
-
-                    losses = []
                     for i in range(n_video):
                         video = data[0][:, i].to(device)
 
@@ -199,10 +197,10 @@ def train(args):
 
                         loss = criterion((g_res * audio_sum.squeeze(1)).squeeze(1),
                                          data[1][:, i, :].to(device).squeeze(1).to(device)).to(device)
-                        losses.append(loss.data.item())
+                        test_loss.append(loss.data.item())
 
             loss_test.append(np.array(test_loss).mean())
-            print('epoch [%d/%d]\t batch [%d/%d]\t. Train loss: %d,\t test loss: %d' % (epoch, n_epoch, batch_n, batch_count, np.array(losses).mean(), np.array(test_loss).mean()))
+            print('epoch [%d/%d]\t batch [%d/%d]\t. Train loss: %d,\t test loss: %d' % (epoch, n_epoch, batch_n, batch_count, np.array(test_loss).mean()))
 
             # if (batch_n + 1) % example_freq == 0:
             #     continue
