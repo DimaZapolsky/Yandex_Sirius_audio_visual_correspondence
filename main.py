@@ -185,9 +185,9 @@ def train(args):
             test_loss = []
             with torch.no_grad():
                 for test_batch_n, test_data in enumerate(data_test_loader, 0):
-                    audio_sum = data[2].to(device) + 1e-10
+                    audio_sum = test_data[2].to(device) + 1e-10
                     for i in range(n_video):
-                        video = data[0][:, i].to(device)
+                        video = test_data[0][:, i].to(device)
 
                         u_res = u_model(audio_sum)
 
