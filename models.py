@@ -72,3 +72,13 @@ class Generator(nn.Module):
         return x.view((-1,) + inputV.shape[-2:] + inputA.shape[-2:])  # x.shape = [bs, h // 16, w // 16, audH, audW]
 
 
+class Audio(nn.Module):
+    def __init__(self, n_channels):
+        super(Audio, self).__init__()
+
+        self.main = torch.hub.load('mateuszbuda/brain-segmentation-pytorch', 'unet', in_channels=1, out_channels=n_channels, init_features=32, pretrained=False)
+
+    def forward(self, input):
+        return self.main(input)
+
+
