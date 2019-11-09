@@ -57,8 +57,11 @@ class Generator(nn.Module):
 
         self.activation = nn.Sigmoid()
 
+        self.tuner = nn.Parameter(torch.Tensor(1))
+
         nn.init.constant_(self.weights, 1)
         nn.init.constant_(self.bias, 0)
+        nn.init.constant_(self.tuner, 1)
 
     def forward(self, inputV, inputA):  # inputV.shape = [bs, K, h // 16, w // 16], inputA.shape = [bs, K, audH, audW]
         input_V_flattened = inputV.view(inputV.shape[0], self.n_channels, -1)
@@ -68,7 +71,12 @@ class Generator(nn.Module):
         input_V_flattened = input_V_flattened * self.weights
         x = input_V_flattened @ input_A_flattened + self.bias
 
+        x = x.view((-1,) + inputV.shape[-2:] + inputA.shape[-2:])
+        x = torch.mean(x, [1, 2])
+
+        x = torch.sigmoid(x) * self.tuner
+
         #x = self.activation(x)
-        return x.view((-1,) + inputV.shape[-2:] + inputA.shape[-2:])  # x.shape = [bs, h // 16, w // 16, audH, audW]
+        return x # x.shape = [bs, audH, audW]
 
 
