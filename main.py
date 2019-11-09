@@ -182,7 +182,7 @@ def train(args):
 
             loss_train.append(np.array(losses).mean())
 
-        if (epoch + 1) % print_loss_freq == 0:
+        if (epoch + 1) % args.dev_loss_freq == 0:
             test_loss = []
             with torch.no_grad():
                 for test_batch_n, test_data in enumerate(data_test_loader, 0):
