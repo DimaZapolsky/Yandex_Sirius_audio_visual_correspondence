@@ -136,6 +136,7 @@ def train(args):
     loss_test = []
     for epoch in range(start_epoch, n_epoch):
         start_time = time.time()
+        print('epoch: {}'.format(epoch))
         for batch_n, data in enumerate(data_loader, 0):
             audio_sum = data[2].to(device) + 1e-10
 
@@ -184,9 +185,11 @@ def train(args):
             test_loss = []
             with torch.no_grad():
                 for test_batch_n, test_data in enumerate(data_test_loader, 0):
-                    audio_sum = torch.sum(test_data[1], 1).to(device)
+                    audio_sum = data[2].to(device) + 1e-10
+
+                    losses = []
                     for i in range(n_video):
-                        video = test_data[0][:, i].to(device)
+                        video = data[0][:, i].to(device)
 
                         u_res = u_model(audio_sum)
 
@@ -194,8 +197,10 @@ def train(args):
                         v_res = v_model(video)
                         g_res = g_model(v_res, u_res)
 
-                        loss = criterion((g_res * audio_sum.squeeze(1)).squeeze(1), data[1][:, i, :].to(device).squeeze(1).to(device)).to(device)
-                        test_loss.append(loss.data.item())
+                        loss = criterion((g_res * audio_sum.squeeze(1)).squeeze(1),
+                                         data[1][:, i, :].to(device).squeeze(1).to(device)).to(device)
+                        losses.append(loss.data.item())
+
             loss_test.append(np.array(test_loss).mean())
             print('epoch [%d/%d]\t batch [%d/%d]\t. Train loss: %d,\t test loss: %d' % (epoch, n_epoch, batch_n, batch_count, np.array(losses).mean(), np.array(test_loss).mean()))
 
