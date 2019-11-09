@@ -68,8 +68,8 @@ def train(args):
     data_test_loader = DataLoader(Dataset(height=height, width=width,
             fps=args.fps, frequency=args.freq, fragment_len=args.fragment_len, batch_size=batch_size,
             window_len=args.window_len, overlap_len=args.overlap_len,
-            audio_dir=os.path.join(args.test_set_dir, 'audios/dev'),
-            video_dir=os.path.join(args.test_set_dir, 'videos/dev')), batch_size=batch_size)
+            audio_dir=os.path.join(args.dev_set_dir, 'audios/dev'),
+            video_dir=os.path.join(args.dev_set_dir, 'videos/dev')), batch_size=batch_size)
 
     video_model_lr = args.video_model_lr  # learning rate for video model
     audio_model_lr = args.audio_model_lr  # learning rate for audio model
@@ -200,7 +200,7 @@ def train(args):
                         test_loss.append(loss.data.item())
 
             loss_test.append(np.array(test_loss).mean())
-            print('epoch [%d/%d]\t Test loss: %d' % (epoch, n_epoch, np.array(test_loss).mean()))
+            print('epoch [{}/{}]\t Test loss: {}' % (epoch, n_epoch, np.array(test_loss).mean()))
 
             # if (batch_n + 1) % example_freq == 0:
             #     continue
