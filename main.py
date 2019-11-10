@@ -164,7 +164,7 @@ def train(args):
                 v_res = v_model(video)
                 g_res = g_model(v_res, u_res)
 
-                loss = criterion((g_res).squeeze(1), (data[1][:, i, :].squeeze(1) > data[1][:, 1 - i, :].squeeze(1)).to(device)).to(device)
+                loss = criterion((g_res).squeeze(1), (data[1][:, i, :].squeeze(1) > data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).to(device)).to(device)
                 losses.append(loss.data.item())
                 loss.backward()
 
@@ -195,9 +195,9 @@ def train(args):
                         video = video.permute([0, 1, 4, 2, 3])
                         v_res = v_model(video)
                         g_res = g_model(v_res, u_res)
+                        #print(g_res.shape, (data[1][:, i, :].squeeze(1) > data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).shape) 
+                        loss = criterion((g_res).squeeze(1), (test_data[1][:, i, :].squeeze(1) > test_data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).to(device)).to(device)
 
-                        loss = criterion((g_res * audio_sum.squeeze(1)).squeeze(1),
-                                         test_data[1][:, i, :].to(device).squeeze(1).to(device)).to(device)
                         test_loss.append(loss.data.item())
 
             loss_test.append(np.array(test_loss).mean())
