@@ -164,7 +164,10 @@ def train(args):
                 v_res = v_model(video)
                 g_res = g_model(v_res, u_res)
 
-                loss = criterion((g_res).squeeze(1), (data[1][:, i, :].squeeze(1) > data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).to(device)).to(device)
+                weight = torch.log1p(audio_sum).squeeze(1)
+                weight = torch.clamp(weight, 1e-3, 10)
+
+                loss = F.binary_cross_entropy((g_res).squeeze(1), (data[1][:, i, :].squeeze(1) > data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).to(device), weight=weight.to(device)).to(device)
                 losses.append(loss.data.item())
                 loss.backward()
 
@@ -196,7 +199,11 @@ def train(args):
                         v_res = v_model(video)
                         g_res = g_model(v_res, u_res)
                         #print(g_res.shape, (data[1][:, i, :].squeeze(1) > data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).shape) 
-                        loss = criterion((g_res).squeeze(1), (test_data[1][:, i, :].squeeze(1) > test_data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).to(device)).to(device)
+
+                        weight = torch.log1p(audio_sum).squeeze(1)
+                        weight = torch.clamp(weight, 1e-3, 10)
+
+                        loss = F.binary_cross_entropy((g_res).squeeze(1), (test_data[1][:, i, :].squeeze(1) > test_data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).to(device), weight.to(device)).to(device)
 
                         test_loss.append(loss.data.item())
 
