@@ -235,7 +235,7 @@ def train(args):
                         v_sample_res = v_model(video)
                         g_sample_res = g_model.forward_pixelwise(v_sample_res, u_sample_res)
 
-                        model_sample_answer = torch.mul(g_sample_res, audio_sum[:, None, None, :, :])
+                        model_sample_answer = torch.mul(g_sample_res, audio_sum[:, None, :, :, :])
 
                         pca = sklearn.decomposition.PCA(n_components=3)
                         vectors_square = model_sample_answer[-1, :, :, :, :]
@@ -261,6 +261,7 @@ def train(args):
 
                         fig = plt.figure(figsize=(8, 8))
                         plt.axis("off")
+                        output = output.squeeze()
                         plt.imsave(os.path.join(args.train_dir, "example_images/epoch_{}.png".format(epoch)), np.transpose(output.cpu().numpy(), (1, 2, 0)))
                         print("Example saved")
 
