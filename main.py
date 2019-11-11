@@ -228,6 +228,9 @@ def train(args):
                         video = test_data[0][-1:, 0, :, :, :, :].to(device)
                         audio = test_data[1][-1:, 0, :].to(device)
 
+                        picture = picture.permute([2, 0, 1])
+                        video = video.permute([0, 1, 4, 2, 3])
+
                         u_sample_res = u_model(audio_sum)
                         v_sample_res = v_model(video)
                         g_sample_res = g_model.forward_pixelwise(v_sample_res, u_sample_res)
