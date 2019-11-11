@@ -59,8 +59,8 @@ class Dataset(torch.utils.data.Dataset):
         audio = torch.load(os.path.join(self.audio_dir, '{}.pt'.format(self.load_order[index]))).type(torch.Tensor)
 
         video_len_sec = video.shape[0] / self.fps
-        # begin = random.uniform(0, video_len_sec - self.fragment_len)
-        begin = (video_len_sec - self.fragment_len) // 2
+        begin = random.uniform(0, video_len_sec - self.fragment_len) * 0.8 + (video_len_sec - self.fragment_len) * 0.1
+        # begin = (video_len_sec - self.fragment_len) // 2
         video = video[int(begin * self.fps):int(begin * self.fps) + int(self.fragment_len * self.fps)]
         audio = audio[int(begin * self.frequency):int(begin * self.frequency) + int(self.fragment_len * self.frequency)]
         if audio.shape[0] != int(self.fragment_len * self.frequency) or video.shape[0] != int(self.fragment_len * self.fps) or begin < 0:

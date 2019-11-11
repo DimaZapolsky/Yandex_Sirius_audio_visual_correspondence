@@ -236,7 +236,7 @@ def train(args):
 
                         pca = sklearn.decomposition.PCA(n_components=3)
                         vectors_square = model_sample_answer[-1, :, :, -1, :]
-                        vectors_flatten = vectors_square.reshape(-1, vectors_square.shape()[-1]).numpy()
+                        vectors_flatten = vectors_square.reshape(-1, vectors_square.shape[-1]).numpy()
                         rgb = pca.fit_transform(vectors_flatten)
 
                         rgb_picture = np.reshape(rgb, vecrors_square.shape(0)[:2] + (-1,))
