@@ -71,7 +71,15 @@ def train(args):
             fps=args.fps, frequency=args.freq, fragment_len=args.fragment_len, batch_size=batch_size,
             window_len=args.window_len, overlap_len=args.overlap_len,
             audio_dir=os.path.join(args.dev_set_dir, 'audios/dev'),
-            video_dir=os.path.join(args.dev_set_dir, 'videos/dev')), batch_size=batch_size)
+            video_dir=os.path.join(args.dev_set_dir, 'videos/dev'), random_crop=False), batch_size=batch_size)
+
+    data_val_loader = DataLoader(Dataset(height=height, width=width,
+                                          fps=args.fps, frequency=args.freq, fragment_len=args.fragment_len,
+                                          batch_size=batch_size,
+                                          window_len=args.window_len, overlap_len=args.overlap_len,
+                                          audio_dir=os.path.join(args.dev_set_dir, 'audios/test'),
+                                          video_dir=os.path.join(args.dev_set_dir, 'videos/test'), random_crop=False),
+                                  batch_size=batch_size)
 
     video_model_lr = args.video_model_lr  # learning rate for video model
     audio_model_lr = args.audio_model_lr  # learning rate for audio model
@@ -162,7 +170,6 @@ def train(args):
 
         print('epoch [{} / {}]\t Test loss: {}'.format(-1, n_epoch, np.array(test_loss).mean()))
 
-
     for epoch in range(start_epoch, n_epoch):
         start_time = time.time()
         print('\nepoch: {}\n'.format(epoch))
@@ -242,6 +249,7 @@ def train(args):
                         vectors_square = vectors_square.reshape(vectors_square.shape[:-2] + (-1,))
                         vectors_flatten = vectors_square.reshape(-1, vectors_square.shape[-1]).cpu().numpy()
                         rgb = pca.fit_transform(vectors_flatten)
+                        rgb = rgb / np.max(np.abs(rgb)) / 2 + 0.5
 
                         rgb_picture = np.reshape(rgb, vectors_square.shape[:2] + (-1,))
                         located_sound_picture = np.transpose(rgb_picture, [2, 0, 1])
