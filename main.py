@@ -16,6 +16,8 @@ from models import *
 from dataset import Dataset
 import time
 import adabound
+from audio import base
+from base import Unet
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -45,6 +47,7 @@ def parse_args():
     parser.add_argument('--pretrained-audio', default=False, type=bool, help='Pretrain U-net model')
     parser.add_argument('--dev-loss-freq', default=1, type=int, help='Number of epochs to print dev loss')
     parser.add_argument('--batch-loss-freq', default=0, type=int, help='If 0 - never prints loss on batches')
+    parser.add_argument('--depth', default=7, type=int, help='Depth of model')
     args = parser.parse_args()
     return args
 
@@ -59,6 +62,7 @@ def train(args):
     batch_size = args.batch_size
     audio_pretrained = args.pretrained_audio
     n_gpu = args.gpu_count
+    depth = args.depth
     device = torch.device("cuda:0" if (torch.cuda.is_available() and n_gpu > 0) else "cpu")
 
     data_loader = DataLoader(Dataset(height=height, width=width,
@@ -106,7 +110,7 @@ def train(args):
 
     start_epoch = 0
 
-    Audio(n_channels).to(device)
+    Unet(generated_features=n_channels, depth=depth).to(device)
 
     if args.load_saved:
         try:
@@ -121,7 +125,7 @@ def train(args):
         except Exception as e:
             print('Loading failed')
             v_model = Video(n_channels, height, width, n_frames).to(device)
-            u_model = Audio(n_channels).to(device)
+            u_model = Unet(generated_features=n_channels, depth=depth).to(device)
             g_model = Generator(n_channels).to(device)
 
             opt_v = adabound.AdaBound(v_model.parameters(), lr=video_model_lr)
@@ -131,7 +135,7 @@ def train(args):
             start_epoch = 0
     else:
         v_model = Video(n_channels, height, width, n_frames).to(device)
-        u_model = Audio(n_channels).to(device)
+        u_model = Unet(generated_features=n_channels, depth=depth).to(device)
         g_model = Generator(n_channels).to(device)
 
         opt_v = adabound.AdaBound(v_model.parameters(), lr=video_model_lr)
