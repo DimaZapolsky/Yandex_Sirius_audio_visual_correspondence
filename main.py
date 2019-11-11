@@ -151,7 +151,7 @@ def train(args):
                 video = video.permute([0, 1, 4, 2, 3])
                 v_res = v_model(video)
                 g_res = g_model(v_res, u_res)
-                #print(g_res.shape, (data[1][:, i, :].squeeze(1) > data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).shape) 
+                #print(g_res.shape, (data[1][:, i, :].squeeze(1) > data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).shape)
 
                 weight = torch.log1p(audio_sum).squeeze(1)
                 weight = torch.clamp(weight, 1e-3, 10)
@@ -159,7 +159,7 @@ def train(args):
                 loss = F.binary_cross_entropy((g_res).squeeze(1), (test_data[1][:, i, :].squeeze(1) > test_data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).to(device), weight.to(device)).to(device)
 
                 test_loss.append(loss.data.item())
- 
+
         print('epoch [{} / {}]\t Test loss: {}'.format(-1, n_epoch, np.array(test_loss).mean()))
 
 
