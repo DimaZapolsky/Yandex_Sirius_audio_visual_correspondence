@@ -35,7 +35,7 @@ def parse_args():
     parser.add_argument('--video-model-lr', default=1e-4, type=float, help='Learning rate for video model')
     parser.add_argument('--audio-model-lr', default=1e-3, type=float, help='Learning rate for audio model')
     parser.add_argument('--generator-lr', default=1e-3, type=float, help='Learning rate for generator')
-    parser.add_argument('--print-loss-freq', default=50, type=int, help='Number of batches to print losses')
+    parser.add_argument('--epoch-loss-freq', default=50, type=int, help='Number of epochs to print losses')
     parser.add_argument('--save-model-freq', default=300, type=int, help='Number of batches to save model')
     parser.add_argument('--example-freq', default=400, type=int, help='Batches to print example')
     parser.add_argument('--train-dir', default='./train/', help='Path to training directory')
@@ -44,6 +44,7 @@ def parse_args():
     parser.add_argument('--batch-size', default=64, type=int, help='Size of batch')
     parser.add_argument('--pretrained-audio', default=False, type=bool, help='Pretrain U-net model')
     parser.add_argument('--dev-loss-freq', default=1, type=int, help='Number of epochs to print dev loss')
+    parser.add_argument('--batch-loss-freq', default=0, type=int, help='If 0 - never prints loss on batches')
     args = parser.parse_args()
     return args
 
@@ -78,7 +79,8 @@ def train(args):
 
     criterion = nn.BCELoss().to(device)
 
-    print_loss_freq = args.print_loss_freq  # print loss every print_loss_freq batches.
+    epoch_loss_freq = args.epoch_loss_freq  # print loss every epoch_loss_freq batches.
+    batch_loss_freq = args.batch_loss_freq
 
     save_freq = args.save_model_freq
 
@@ -149,15 +151,6 @@ def train(args):
 
                 video = data[0][:, i].to(device)
 
-                # print('tut')
-                # print(audio_sum.mean())
-                # print(audio_sum.min())
-                # print(audio_sum.max())
-                #
-                # plt.imsave(
-                #     fname='spectrogram.png',
-                #     arr=audio_sum.squeeze() / audio_sum.max(),
-                # )
                 u_res = u_model(audio_sum)
 
                 video = video.permute([0, 1, 4, 2, 3])
@@ -167,7 +160,7 @@ def train(args):
                 weight = torch.log1p(audio_sum).squeeze(1)
                 weight = torch.clamp(weight, 1e-3, 10)
 
-                loss = F.binary_cross_entropy((g_res).squeeze(1), (data[1][:, i, :].squeeze(1) > data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).to(device), weight=weight.to(device)).to(device)
+                loss = F.binary_cross_entropy(g_res.squeeze(1), (data[1][:, i, :].squeeze(1) > data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).to(device), weight=weight.to(device)).to(device)
                 losses.append(loss.data.item())
                 loss.backward()
 
@@ -175,15 +168,13 @@ def train(args):
                 opt_u.step()
                 opt_g.step()
 
-            if (batch_n + 1) % print_loss_freq == 0:
-                print('batch: {:<10}   |   loss: {:<20}    |    average time per batch: {:<20}'.format(batch_n + 1, np.array(losses).mean(), (time.time() - start_time) / (batch_n + 1)))
-                with open('grad_log.txt', 'a') as file:
-                    print(g_model.weights, file=file)
-                    print(g_model.bias, file=file)
-                    print(g_model.tuner, file=file)
-                # print(g_model.weights, file=open('log.txt', 'w'))
-
             loss_train.append(np.array(losses).mean())
+
+            if batch_loss_freq != 0 and (batch_n + 1) % batch_loss_freq == 0:
+                print('batch: {:<10}   |   Loss: {:<20}    |    average time per batch: {:<20}'.format(batch_n + 1, np.array(losses).mean(), (time.time() - start_time) / (batch_n + 1)))
+
+        if (epoch + 1) % epoch_loss_freq == 0:
+            print('epoch: [{:<6} / {:<6}]   |   TRAIN_LOSS: {:<20}   |   average time per epoch: {}'.format(epoch + 1, n_epoch + 1, np.array(losses).mean(), (time.time() - start_time) / (epoch + 1)))
 
         if (epoch + 1) % args.dev_loss_freq == 0:
             test_loss = []
@@ -198,54 +189,52 @@ def train(args):
                         video = video.permute([0, 1, 4, 2, 3])
                         v_res = v_model(video)
                         g_res = g_model(v_res, u_res)
-                        #print(g_res.shape, (data[1][:, i, :].squeeze(1) > data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).shape) 
 
                         weight = torch.log1p(audio_sum).squeeze(1)
                         weight = torch.clamp(weight, 1e-3, 10)
 
-                        loss = F.binary_cross_entropy((g_res).squeeze(1), (test_data[1][:, i, :].squeeze(1) > test_data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).to(device), weight.to(device)).to(device)
+                        loss = F.binary_cross_entropy(g_res.squeeze(1), (test_data[1][:, i, :].squeeze(1) > test_data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).to(device), weight.to(device)).to(device)
 
                         test_loss.append(loss.data.item())
 
             loss_test.append(np.array(test_loss).mean())
             print('epoch [{} / {}]\t Test loss: {}'.format(epoch, n_epoch, np.array(test_loss).mean()))
 
-            # if (batch_n + 1) % example_freq == 0:
-            #     continue
-            #     with torch.no_grad():
-            #         picture = data[0][-1, 0, :, :, :, -1]
-            #         video = data[0][-1:, 0, :, :, :, :]
-            #         audio = data[1][-1:, 0, :]
-            #
-            #         u_sample_res = u_model(audio)
-            #         v_sample_res = v_model(video)
-            #         g_sample_res = g_model(v_sample_res, u_sample_res)
-            #
-            #         model_sample_answer = torch.mul(g_sample_res, audio[:, None, None, :, :])
-            #
-            #         pca = sklearn.decomposition.PCA(n_components=3)
-            #         vectors_square = model_sample_answer[-1, :, :, -1, :]
-            #         vectors_flatten = vectors_square.reshape(-1, vectors_square.shape()[-1]).numpy()
-            #         rgb = pca.fit_transform(vectors_flatten)
-            #
-            #         rgb_picture = np.reshape(rgb, vecrors_square.shape(0)[:2] + (-1,))
-            #         located_sound_picture = np.transpose(rgb_picture, [2, 0, 1])
-            #         full_sound = torch.from_numpy(located_sound_picture)
-            #         full_sound = full_sound[None, :, :, :]
-            #
-            #         x_out = torch.zeros((1,) + picture.shape[1:] + (2,))
-            #         nx = np.linspace(-1, 1, picture.shape[1])
-            #         ny = np.linspace(-1, 1, picture.shape[2])
-            #         nxv, nyv = np.meshgrid(nx, ny)
-            #         x_out[:, :, :, 0] = torch.from_numpy(nxv)
-            #         x_out[:, :, :, 1] = torch.from_numpy(nyv)
-            #
-            #         located_sound_picture = F.grid_sample(full_sound, x_out)
-            #         output = located_sound_picture * 0.2 + picture * 0.8
-            #
-            #         fig = plt.figure(figsize=(8,8))
-            #         plt.axis("off")
-            #         plt.imshow(np.transpose(output.numpy(), (1, 2, 0)))
+        # if (epoch + 1) % example_freq == 0:
+        #     with torch.no_grad():
+        #         picture = data[0][-1, 0, :, :, :, -1]
+        #         video = data[0][-1:, 0, :, :, :, :]
+        #         audio = data[1][-1:, 0, :]
+        #
+        #         u_sample_res = u_model(audio)
+        #         v_sample_res = v_model(video)
+        #         g_sample_res = g_model(v_sample_res, u_sample_res)
+        #
+        #         model_sample_answer = torch.mul(g_sample_res, audio[:, None, None, :, :])
+        #
+        #         pca = sklearn.decomposition.PCA(n_components=3)
+        #         vectors_square = model_sample_answer[-1, :, :, -1, :]
+        #         vectors_flatten = vectors_square.reshape(-1, vectors_square.shape()[-1]).numpy()
+        #         rgb = pca.fit_transform(vectors_flatten)
+        #
+        #         rgb_picture = np.reshape(rgb, vectors_square.shape(0)[:2] + (-1,))
+        #         located_sound_picture = np.transpose(rgb_picture, [2, 0, 1])
+        #         full_sound = torch.from_numpy(located_sound_picture)
+        #         full_sound = full_sound[None, :, :, :]
+        #
+        #         x_out = torch.zeros((1,) + picture.shape[1:] + (2,))
+        #         nx = np.linspace(-1, 1, picture.shape[1])
+        #         ny = np.linspace(-1, 1, picture.shape[2])
+        #         nxv, nyv = np.meshgrid(nx, ny)
+        #         x_out[:, :, :, 0] = torch.from_numpy(nxv)
+        #         x_out[:, :, :, 1] = torch.from_numpy(nyv)
+        #
+        #         located_sound_picture = F.grid_sample(full_sound, x_out)
+        #         output = located_sound_picture * 0.2 + picture * 0.8
+        #
+        #         fig = plt.figure(figsize=(8,8))
+        #         plt.axis("off")
+        #         plt.imshow(np.transpose(output.numpy(), (1, 2, 0)))
 
         if (epoch + 1) % save_freq == 0:
             print('Saving model')
