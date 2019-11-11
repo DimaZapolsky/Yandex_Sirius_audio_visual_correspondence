@@ -44,6 +44,7 @@ def create_dataset_videos(args, src_path, dst_path):
                 break
             if i == int(j * src_fps / args.fps):
                 image = Image.fromarray(frame, 'RGB')
+                image = torchvision.transforms.Resize(args.width)(image)
                 image = torchvision.transforms.CenterCrop((args.height, args.width))(image)
                 vid_frames.append(np.asarray(image))
                 j += 1

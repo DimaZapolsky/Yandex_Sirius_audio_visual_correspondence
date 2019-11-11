@@ -102,7 +102,7 @@ def train(args):
     path_epoch = os.path.join(args.train_dir, 'checkpoint/epoch.pt')
     os.makedirs(os.path.join(args.train_dir, 'checkpoint/'), exist_ok=True)
 
-    os.makedirs(os.path.join(args.train_dir, "example_images/"))
+    os.makedirs(os.path.join(args.train_dir, "example_images/"), exist_ok=True)
 
     start_epoch = 0
 
@@ -172,9 +172,9 @@ def train(args):
 
         print('epoch [{} / {}]\t Test loss: {}'.format(-1, n_epoch, np.array(test_loss).mean()))
 
+    start_time = time.time()
     for epoch in range(start_epoch, n_epoch):
-        start_time = time.time()
-        print('\nepoch: {}\n'.format(epoch))
+        print('\nepoch: {}\n'.format(epoch + 1))
         for batch_n, data in enumerate(data_loader, 0):
             audio_sum = data[2].to(device) + 1e-10
 
@@ -209,7 +209,7 @@ def train(args):
                 print('batch: {:<10}   |   Loss: {:<20}    |    average time per batch: {:<20}'.format(batch_n + 1, np.array(losses).mean(), (time.time() - start_time) / (batch_n + 1)))
 
         if (epoch + 1) % epoch_loss_freq == 0:
-            print('epoch: [{:<6} / {:<6}]   |   TRAIN_LOSS: {:<20}   |   average time per epoch: {}'.format(epoch + 1, n_epoch + 1, np.array(losses).mean(), (time.time() - start_time) / (epoch + 1)))
+            print('epoch: [{:<4} / {:<4}]   |   TRAIN_LOSS: {:<20}   |   average time per epoch: {}'.format(epoch + 1, n_epoch, np.array(losses).mean(), (time.time() - start_time) / (epoch + 1)))
 
         if (epoch + 1) % args.dev_loss_freq == 0:
             test_loss = []
@@ -232,52 +232,59 @@ def train(args):
 
                         test_loss.append(loss.data.item())
 
-                    if test_batch_n == 0:
-                        picture = test_data[0][-1, 0, -1, :, :, :].to(device)
-                        video = test_data[0][-1:, 0, :, :, :, :].to(device)
-                        audio = test_data[1][-1:, 0, :].to(device)
-
-                        picture = picture.permute([2, 0, 1])
-                        video = video.permute([0, 1, 4, 2, 3])
-
-                        u_sample_res = u_model(audio_sum)
-                        v_sample_res = v_model(video)
-                        g_sample_res = g_model.forward_pixelwise(v_sample_res, u_sample_res)
-
-                        model_sample_answer = torch.mul(g_sample_res, audio_sum[:, None, :, :, :])
-
-                        pca = sklearn.decomposition.PCA(n_components=3)
-                        vectors_square = model_sample_answer[-1, :, :, :, :]
-                        vectors_square = vectors_square.reshape(vectors_square.shape[:-2] + (-1,))
-                        vectors_flatten = vectors_square.reshape(-1, vectors_square.shape[-1]).cpu().numpy()
-                        rgb = pca.fit_transform(vectors_flatten)
-                        rgb = rgb / np.max(np.abs(rgb)) / 2 + 0.5
-
-                        rgb_picture = np.reshape(rgb, vectors_square.shape[:2] + (-1,))
-                        located_sound_picture = np.transpose(rgb_picture, [2, 0, 1])
-                        full_sound = torch.from_numpy(located_sound_picture).to(device)
-                        full_sound = full_sound[None, :, :, :]
-
-                        x_out = torch.zeros((1,) + picture.shape[1:] + (2,)).to(device)
-                        nx = np.linspace(-1, 1, picture.shape[1])
-                        ny = np.linspace(-1, 1, picture.shape[2])
-                        nxv, nyv = np.meshgrid(nx, ny)
-                        x_out[:, :, :, 0] = torch.from_numpy(nxv).to(device)
-                        x_out[:, :, :, 1] = torch.from_numpy(nyv).to(device)
-
-                        located_sound_picture = F.grid_sample(full_sound, x_out)
-
-                        output = located_sound_picture * 0.3 + picture * 0.7
-
-                        fig = plt.figure(figsize=(8, 8))
-                        plt.axis("off")
-                        output = output.squeeze()
-                        plt.imsave(os.path.join(args.train_dir, "example_images/epoch_{}.png".format(epoch)), np.transpose(output.cpu().numpy(), (1, 2, 0)))
-                        print("Example saved")
-
-
             loss_test.append(np.array(test_loss).mean())
-            print('epoch [{} / {}]\t Test loss: {}'.format(epoch, n_epoch, np.array(test_loss).mean()))
+            print('epoch [{} / {}]\t Test loss: {}'.format(epoch + 1, n_epoch, np.array(test_loss).mean()))
+
+        if (epoch + 1) % example_freq == 0:
+            for batch_n, data in enumerate(data_val_loader, 0):
+                if test_batch_n == 0:
+                    picture = test_data[0][-1, 0, -1, :, :, :].to(device)
+                    video = test_data[0][-1:, 0, :, :, :, :].to(device)
+                    audio = test_data[1][-1:, 0, :].to(device)
+
+                    picture = picture.permute([2, 0, 1])
+                    video = video.permute([0, 1, 4, 2, 3])
+
+                    u_sample_res = u_model(audio_sum)
+                    v_sample_res = v_model(video)
+                    g_sample_res = g_model.forward_pixelwise(v_sample_res, u_sample_res)
+
+                    model_sample_answer = torch.mul(g_sample_res, audio_sum[:, None, :, :, :])
+
+                    pca = sklearn.decomposition.PCA(n_components=3)
+                    vectors_square = model_sample_answer[-1, :, :, :, :]
+                    vectors_square = vectors_square.reshape(vectors_square.shape[:-2] + (-1,))
+                    vectors_flatten = vectors_square.reshape(-1, vectors_square.shape[-1]).cpu().numpy()
+                    rgb = pca.fit_transform(vectors_flatten)
+                    rgb = rgb / np.max(np.abs(rgb)) / 2 + 0.5
+
+                    rgb_picture = np.reshape(rgb, vectors_square.shape[:2] + (-1,))
+                    located_sound_picture = np.transpose(rgb_picture, [2, 0, 1])
+                    full_sound = torch.from_numpy(located_sound_picture).to(device)
+                    full_sound = full_sound[None, :, :, :]
+
+                    x_out = torch.zeros((1,) + picture.shape[1:] + (2,)).to(device)
+                    nx = np.linspace(-1, 1, picture.shape[1])
+                    ny = np.linspace(-1, 1, picture.shape[2])
+                    nxv, nyv = np.meshgrid(nx, ny)
+                    x_out[:, :, :, 0] = torch.from_numpy(nxv).to(device)
+                    x_out[:, :, :, 1] = torch.from_numpy(nyv).to(device)
+
+                    located_sound_picture = F.grid_sample(full_sound, x_out)
+
+                    output = located_sound_picture * 0.3 + picture * 0.7
+
+                    located_sound_picture = located_sound_picture.squeeze()
+                    picture = picture.squeeze()
+                    output = output.squeeze()
+                    plt.imsave(os.path.join(args.train_dir, "example_images/epoch_sound_{}.png".format(epoch)),
+                               np.transpose(located_sound_picture.cpu().numpy(), (1, 2, 0)))
+                    plt.imsave(os.path.join(args.train_dir, "example_images/epoch_source_{}.png".format(epoch)),
+                               np.transpose(picture.cpu().numpy(), (1, 2, 0)))
+
+                    plt.imsave(os.path.join(args.train_dir, "example_images/epoch_final_{}.png".format(epoch)),
+                               np.transpose(output.cpu().numpy(), (1, 2, 0)))
+                    print("Example saved")
 
         if (epoch + 1) % save_freq == 0:
             print('Saving model')
