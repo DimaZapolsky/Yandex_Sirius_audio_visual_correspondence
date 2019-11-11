@@ -102,6 +102,8 @@ def train(args):
     path_epoch = os.path.join(args.train_dir, 'checkpoint/epoch.pt')
     os.makedirs(os.path.join(args.train_dir, 'checkpoint/'), exist_ok=True)
 
+    os.makedirs(os.path.join(args.train_dir, "example_images/"))
+
     start_epoch = 0
 
     Audio(n_channels).to(device)
