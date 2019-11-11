@@ -239,7 +239,7 @@ def train(args):
                         vectors_flatten = vectors_square.reshape(-1, vectors_square.shape[-1]).cpu().numpy()
                         rgb = pca.fit_transform(vectors_flatten)
 
-                        rgb_picture = np.reshape(rgb, vectors_square.shape(0)[:2] + (-1,))
+                        rgb_picture = np.reshape(rgb, vectors_square.shape[:2] + (-1,))
                         located_sound_picture = np.transpose(rgb_picture, [2, 0, 1])
                         full_sound = torch.from_numpy(located_sound_picture).to(device)
                         full_sound = full_sound[None, :, :, :]
