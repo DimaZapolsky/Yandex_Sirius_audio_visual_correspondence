@@ -261,7 +261,7 @@ def train(args):
                         vectors_square = vectors_square.reshape(vectors_square.shape[:-2] + (-1,))
                         vectors_flatten = vectors_square.reshape(-1, vectors_square.shape[-1]).cpu().numpy()
                         rgb = pca.fit_transform(vectors_flatten)
-                        rgb = rgb + np.min(rgb)
+                        rgb = rgb - np.min(rgb)
                         rgb = rgb / np.max(rgb)
 
                         rgb_picture = np.reshape(rgb, vectors_square.shape[:2] + (-1,))
