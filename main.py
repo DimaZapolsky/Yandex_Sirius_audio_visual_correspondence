@@ -223,10 +223,10 @@ def train(args):
 
                         test_loss.append(loss.data.item())
 
-                    if test_batch_an == 0:
-                        picture = data[0][-1, 0, :, :, :, -1]
-                        video = data[0][-1:, 0, :, :, :, :]
-                        audio = data[1][-1:, 0, :]
+                    if test_batch_n == 0:
+                        picture = data[0][-1, 0, :, :, :, -1].to(device)
+                        video = data[0][-1:, 0, :, :, :, :].to(device)
+                        audio = data[1][-1:, 0, :].to(device)
 
                         u_sample_res = u_model(audio_sum)
                         v_sample_res = v_model(video)
