@@ -65,7 +65,7 @@ def train(args):
             fps=args.fps, frequency=args.freq, fragment_len=args.fragment_len, batch_size=batch_size,
             window_len=args.window_len, overlap_len=args.overlap_len,
             audio_dir=os.path.join(args.train_set_dir, 'audios/train'),
-            video_dir=os.path.join(args.train_set_dir, 'videos/train')), batch_size=batch_size)
+            video_dir=os.path.join(args.train_set_dir, 'videos/train'), random_crop=False), batch_size=batch_size)
 
     data_test_loader = DataLoader(Dataset(height=height, width=width,
             fps=args.fps, frequency=args.freq, fragment_len=args.fragment_len, batch_size=batch_size,
@@ -257,7 +257,8 @@ def train(args):
                         vectors_square = vectors_square.reshape(vectors_square.shape[:-2] + (-1,))
                         vectors_flatten = vectors_square.reshape(-1, vectors_square.shape[-1]).cpu().numpy()
                         rgb = pca.fit_transform(vectors_flatten)
-                        rgb = rgb / np.max(np.abs(rgb)) / 2 + 0.5
+                        rgb = rgb + np.min(rgb)
+                        rgb = rgb / np.max(rgb)
 
                         rgb_picture = np.reshape(rgb, vectors_square.shape[:2] + (-1,))
                         located_sound_picture = np.transpose(rgb_picture, [2, 0, 1])
