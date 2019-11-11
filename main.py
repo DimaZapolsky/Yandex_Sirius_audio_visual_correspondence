@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader
 from models import *
 from dataset import Dataset
 import time
-
+import adabound
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -104,9 +104,9 @@ def train(args):
             u_model = torch.load(path_u.format(start_epoch)).to(device)
             v_model = torch.load(path_v.format(start_epoch)).to(device)
             g_model = torch.load(path_g.format(start_epoch)).to(device)
-            opt_v = optim.SGD(v_model.parameters(), lr=video_model_lr)
-            opt_u = optim.SGD(u_model.parameters(), lr=audio_model_lr)
-            opt_g = optim.SGD(g_model.parameters(), lr=generator_lr)
+            opt_v = adabound.AdaBound(v_model.parameters(), lr=video_model_lr)
+            opt_u = adabound.AdaBound(u_model.parameters(), lr=audio_model_lr)
+            opt_g = adabound.AdaBound(g_model.parameters(), lr=generator_lr)
 
         except Exception as e:
             print('Loading failed')
@@ -114,9 +114,9 @@ def train(args):
             u_model = Audio(n_channels).to(device)
             g_model = Generator(n_channels).to(device)
 
-            opt_v = optim.SGD(v_model.parameters(), lr=video_model_lr)
-            opt_u = optim.SGD(u_model.parameters(), lr=audio_model_lr)
-            opt_g = optim.SGD(g_model.parameters(), lr=generator_lr)
+            opt_v = adabound.AdaBound(v_model.parameters(), lr=video_model_lr)
+            opt_u = adabound.AdaBound(u_model.parameters(), lr=audio_model_lr)
+            opt_g = adabound.AdaBound(g_model.parameters(), lr=generator_lr)
 
             start_epoch = 0
     else:
@@ -124,9 +124,9 @@ def train(args):
         u_model = Audio(n_channels).to(device)
         g_model = Generator(n_channels).to(device)
 
-        opt_v = optim.SGD(v_model.parameters(), lr=video_model_lr)
-        opt_u = optim.SGD(u_model.parameters(), lr=audio_model_lr)
-        opt_g = optim.SGD(g_model.parameters(), lr=generator_lr)
+        opt_v = adabound.AdaBound(v_model.parameters(), lr=video_model_lr)
+        opt_u = adabound.AdaBound(u_model.parameters(), lr=audio_model_lr)
+        opt_g = adabound.AdaBound(g_model.parameters(), lr=generator_lr)
 
         start_epoch = 0
 
@@ -137,6 +137,32 @@ def train(args):
 
     loss_train = []
     loss_test = []
+
+
+    test_loss = []
+    with torch.no_grad():
+        for test_batch_n, test_data in enumerate(data_test_loader, 0):
+            audio_sum = test_data[2].to(device) + 1e-10
+            for i in range(n_video):
+                video = test_data[0][:, i].to(device)
+
+                u_res = u_model(audio_sum)
+
+                video = video.permute([0, 1, 4, 2, 3])
+                v_res = v_model(video)
+                g_res = g_model(v_res, u_res)
+                #print(g_res.shape, (data[1][:, i, :].squeeze(1) > data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).shape) 
+
+                weight = torch.log1p(audio_sum).squeeze(1)
+                weight = torch.clamp(weight, 1e-3, 10)
+
+                loss = F.binary_cross_entropy((g_res).squeeze(1), (test_data[1][:, i, :].squeeze(1) > test_data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).to(device), weight.to(device)).to(device)
+
+                test_loss.append(loss.data.item())
+ 
+        print('epoch [{} / {}]\t Test loss: {}'.format(-1, n_epoch, np.array(test_loss).mean()))
+
+
     for epoch in range(start_epoch, n_epoch):
         start_time = time.time()
         print('\nepoch: {}\n'.format(epoch))
@@ -197,44 +223,45 @@ def train(args):
 
                         test_loss.append(loss.data.item())
 
+                    if test_batch_an == 0:
+                        picture = data[0][-1, 0, :, :, :, -1]
+                        video = data[0][-1:, 0, :, :, :, :]
+                        audio = data[1][-1:, 0, :]
+
+                        u_sample_res = u_model(audio_sum)
+                        v_sample_res = v_model(video)
+                        g_sample_res = g_model.forward_pixelwise(v_sample_res, u_sample_res)
+
+                        model_sample_answer = torch.mul(g_sample_res, audio_sum[:, None, None, :, :])
+
+                        pca = sklearn.decomposition.PCA(n_components=3)
+                        vectors_square = model_sample_answer[-1, :, :, -1, :]
+                        vectors_flatten = vectors_square.reshape(-1, vectors_square.shape()[-1]).numpy()
+                        rgb = pca.fit_transform(vectors_flatten)
+
+                        rgb_picture = np.reshape(rgb, vecrors_square.shape(0)[:2] + (-1,))
+                        located_sound_picture = np.transpose(rgb_picture, [2, 0, 1])
+                        full_sound = torch.from_numpy(located_sound_picture)
+                        full_sound = full_sound[None, :, :, :]
+
+                        x_out = torch.zeros((1,) + picture.shape[1:] + (2,))
+                        nx = np.linspace(-1, 1, picture.shape[1])
+                        ny = np.linspace(-1, 1, picture.shape[2])
+                        nxv, nyv = np.meshgrid(nx, ny)
+                        x_out[:, :, :, 0] = torch.from_numpy(nxv)
+                        x_out[:, :, :, 1] = torch.from_numpy(nyv)
+
+                        located_sound_picture = F.grid_sample(full_sound, x_out)
+                        output = located_sound_picture * 0.3 + picture * 0.7
+
+                        fig = plt.figure(figsize=(8,8))
+                        plt.axis("off")
+                        plt.imsave(os.path.join(args.train_dir, "example_images/epoch_{}.png".format(epoch)), np.transpose(output.numpy(), (1, 2, 0)))
+                        print("Example saved")
+
+
             loss_test.append(np.array(test_loss).mean())
             print('epoch [{} / {}]\t Test loss: {}'.format(epoch, n_epoch, np.array(test_loss).mean()))
-
-        # if (epoch + 1) % example_freq == 0:
-        #     with torch.no_grad():
-        #         picture = data[0][-1, 0, :, :, :, -1]
-        #         video = data[0][-1:, 0, :, :, :, :]
-        #         audio = data[1][-1:, 0, :]
-        #
-        #         u_sample_res = u_model(audio)
-        #         v_sample_res = v_model(video)
-        #         g_sample_res = g_model(v_sample_res, u_sample_res)
-        #
-        #         model_sample_answer = torch.mul(g_sample_res, audio[:, None, None, :, :])
-        #
-        #         pca = sklearn.decomposition.PCA(n_components=3)
-        #         vectors_square = model_sample_answer[-1, :, :, -1, :]
-        #         vectors_flatten = vectors_square.reshape(-1, vectors_square.shape()[-1]).numpy()
-        #         rgb = pca.fit_transform(vectors_flatten)
-        #
-        #         rgb_picture = np.reshape(rgb, vectors_square.shape(0)[:2] + (-1,))
-        #         located_sound_picture = np.transpose(rgb_picture, [2, 0, 1])
-        #         full_sound = torch.from_numpy(located_sound_picture)
-        #         full_sound = full_sound[None, :, :, :]
-        #
-        #         x_out = torch.zeros((1,) + picture.shape[1:] + (2,))
-        #         nx = np.linspace(-1, 1, picture.shape[1])
-        #         ny = np.linspace(-1, 1, picture.shape[2])
-        #         nxv, nyv = np.meshgrid(nx, ny)
-        #         x_out[:, :, :, 0] = torch.from_numpy(nxv)
-        #         x_out[:, :, :, 1] = torch.from_numpy(nyv)
-        #
-        #         located_sound_picture = F.grid_sample(full_sound, x_out)
-        #         output = located_sound_picture * 0.2 + picture * 0.8
-        #
-        #         fig = plt.figure(figsize=(8,8))
-        #         plt.axis("off")
-        #         plt.imshow(np.transpose(output.numpy(), (1, 2, 0)))
 
         if (epoch + 1) % save_freq == 0:
             print('Saving model')
