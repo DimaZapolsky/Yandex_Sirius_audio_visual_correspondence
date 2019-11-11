@@ -236,27 +236,27 @@ def train(args):
 
                         pca = sklearn.decomposition.PCA(n_components=3)
                         vectors_square = model_sample_answer[-1, :, :, -1, :]
-                        vectors_flatten = vectors_square.reshape(-1, vectors_square.shape[-1]).numpy()
+                        vectors_flatten = vectors_square.reshape(-1, vectors_square.shape[-1]).cpu().numpy()
                         rgb = pca.fit_transform(vectors_flatten)
 
                         rgb_picture = np.reshape(rgb, vecrors_square.shape(0)[:2] + (-1,))
                         located_sound_picture = np.transpose(rgb_picture, [2, 0, 1])
-                        full_sound = torch.from_numpy(located_sound_picture)
+                        full_sound = torch.from_numpy(located_sound_picture).to(device)
                         full_sound = full_sound[None, :, :, :]
 
-                        x_out = torch.zeros((1,) + picture.shape[1:] + (2,))
+                        x_out = torch.zeros((1,) + picture.shape[1:] + (2,)).to(device)
                         nx = np.linspace(-1, 1, picture.shape[1])
                         ny = np.linspace(-1, 1, picture.shape[2])
                         nxv, nyv = np.meshgrid(nx, ny)
-                        x_out[:, :, :, 0] = torch.from_numpy(nxv)
-                        x_out[:, :, :, 1] = torch.from_numpy(nyv)
+                        x_out[:, :, :, 0] = torch.from_numpy(nxv).to(device)
+                        x_out[:, :, :, 1] = torch.from_numpy(nyv).to(device)
 
                         located_sound_picture = F.grid_sample(full_sound, x_out)
                         output = located_sound_picture * 0.3 + picture * 0.7
 
                         fig = plt.figure(figsize=(8,8))
                         plt.axis("off")
-                        plt.imsave(os.path.join(args.train_dir, "example_images/epoch_{}.png".format(epoch)), np.transpose(output.numpy(), (1, 2, 0)))
+                        plt.imsave(os.path.join(args.train_dir, "example_images/epoch_{}.png".format(epoch)), np.transpose(output.cpu().numpy(), (1, 2, 0)))
                         print("Example saved")
 
 
