@@ -72,13 +72,31 @@ class Generator(nn.Module):
         input_V_flattened = input_V_flattened * self.weights
         x = input_V_flattened @ input_A_flattened + self.bias
 
-        x = x.view((-1,) + inputV.shape[-2:] + inputA.shape[-2:])
-        x = torch.mean(x, [1, 2])
+        x = x.view((-1,) + inputA.shape[-2:])
+        #x = torch.mean(x, [1, 2])
 
         #x = torch.sigmoid(x) #  * self.tuner
 
         x = self.activation(x)
         return x # x.shape = [bs, audH, audW]
+
+    def forward_pixelwise(self, inputV, inputA):
+
+        input_V_flattened = inputV.view(inputV.shape[0], self.n_channels, -1)
+
+        input_A_flattened = inputA.view(inputA.shape[0], self.n_channels, -1)
+
+        input_V_flattened = input_V_flattened.permute([0, 2, 1])
+        input_V_flattened = input_V_flattened * self.weights
+        x = input_V_flattened @ input_A_flattened + self.bias
+
+        x = x.view((-1,) + inputV.shape[-2:] + inputA.shape[-2:])
+        #x = torch.mean(x, [1, 2])
+
+        #x = torch.sigmoid(x) #  * self.tuner
+
+        x = self.activation(x)
+        return x
 
 
 class Audio(nn.Module):
