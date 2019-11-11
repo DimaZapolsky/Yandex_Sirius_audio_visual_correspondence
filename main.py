@@ -253,7 +253,7 @@ def train(args):
                         x_out[:, :, :, 1] = torch.from_numpy(nyv).to(device)
 
                         located_sound_picture = F.grid_sample(full_sound, x_out)
-                        print(located_sound_picture.shape, picture.shape)
+
                         output = located_sound_picture * 0.3 + picture * 0.7
 
                         fig = plt.figure(figsize=(8, 8))
