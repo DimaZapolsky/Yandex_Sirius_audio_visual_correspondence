@@ -236,57 +236,58 @@ def train(args):
             print('epoch [{} / {}]\t Test loss: {}'.format(epoch + 1, n_epoch, np.array(test_loss).mean()))
 
         if (epoch + 1) % example_freq == 0:
-            for eval_batch_n, eval_data in enumerate(data_eval_loader, 0):
-                if eval_batch_n == 0:
-                    picture = eval_data[0][-1, 0, -1, :, :, :].to(device)
-                    video = eval_data[0][-1:, 0, :, :, :, :].to(device)
-                    audio = eval_data[1][-1:, 0, :].to(device)
+            with torch.no_grad():
+                for eval_batch_n, eval_data in enumerate(data_eval_loader, 0):
+                    if eval_batch_n == 0:
+                        picture = eval_data[0][-1, 0, -1, :, :, :].to(device)
+                        video = eval_data[0][-1:, 0, :, :, :, :].to(device)
+                        audio = eval_data[1][-1:, 0, :].to(device)
 
-                    picture = picture.permute([2, 0, 1])
-                    video = video.permute([0, 1, 4, 2, 3])
+                        picture = picture.permute([2, 0, 1])
+                        video = video.permute([0, 1, 4, 2, 3])
 
-                    u_sample_res = u_model(audio_sum)
-                    v_sample_res = v_model(video)
-                    g_sample_res = g_model.forward_pixelwise(v_sample_res, u_sample_res)
+                        u_sample_res = u_model(audio_sum)
+                        v_sample_res = v_model(video)
+                        g_sample_res = g_model.forward_pixelwise(v_sample_res, u_sample_res)
 
-                    model_sample_answer = torch.mul(g_sample_res, audio_sum[:, None, :, :, :])
+                        model_sample_answer = torch.mul(g_sample_res, audio_sum[:, None, :, :, :])
 
-                    pca = sklearn.decomposition.PCA(n_components=3)
-                    vectors_square = model_sample_answer[-1, :, :, :, :]
-                    vectors_square = vectors_square.reshape(vectors_square.shape[:-2] + (-1,))
-                    vectors_flatten = vectors_square.reshape(-1, vectors_square.shape[-1]).cpu().numpy()
-                    rgb = pca.fit_transform(vectors_flatten)
-                    rgb = rgb / np.max(np.abs(rgb)) / 2 + 0.5
+                        pca = sklearn.decomposition.PCA(n_components=3)
+                        vectors_square = model_sample_answer[-1, :, :, :, :]
+                        vectors_square = vectors_square.reshape(vectors_square.shape[:-2] + (-1,))
+                        vectors_flatten = vectors_square.reshape(-1, vectors_square.shape[-1]).cpu().numpy()
+                        rgb = pca.fit_transform(vectors_flatten)
+                        rgb = rgb / np.max(np.abs(rgb)) / 2 + 0.5
 
-                    rgb_picture = np.reshape(rgb, vectors_square.shape[:2] + (-1,))
-                    located_sound_picture = np.transpose(rgb_picture, [2, 0, 1])
-                    full_sound = torch.from_numpy(located_sound_picture).to(device)
-                    full_sound = full_sound[None, :, :, :]
+                        rgb_picture = np.reshape(rgb, vectors_square.shape[:2] + (-1,))
+                        located_sound_picture = np.transpose(rgb_picture, [2, 0, 1])
+                        full_sound = torch.from_numpy(located_sound_picture).to(device)
+                        full_sound = full_sound[None, :, :, :]
 
-                    x_out = torch.zeros((1,) + picture.shape[1:] + (2,)).to(device)
-                    nx = np.linspace(-1, 1, picture.shape[1])
-                    ny = np.linspace(-1, 1, picture.shape[2])
-                    nxv, nyv = np.meshgrid(nx, ny)
-                    x_out[:, :, :, 0] = torch.from_numpy(nxv).to(device)
-                    x_out[:, :, :, 1] = torch.from_numpy(nyv).to(device)
+                        x_out = torch.zeros((1,) + picture.shape[1:] + (2,)).to(device)
+                        nx = np.linspace(-1, 1, picture.shape[1])
+                        ny = np.linspace(-1, 1, picture.shape[2])
+                        nxv, nyv = np.meshgrid(nx, ny)
+                        x_out[:, :, :, 0] = torch.from_numpy(nxv).to(device)
+                        x_out[:, :, :, 1] = torch.from_numpy(nyv).to(device)
 
-                    located_sound_picture = F.grid_sample(full_sound, x_out)
+                        located_sound_picture = F.grid_sample(full_sound, x_out)
 
-                    output = located_sound_picture * 0.3 + picture * 0.7
+                        output = located_sound_picture * 0.3 + picture * 0.7
 
-                    located_sound_picture = located_sound_picture.squeeze()
-                    picture = picture.squeeze()
-                    output = output.squeeze()
-                    plt.imsave(os.path.join(args.train_dir, "example_images/epoch_sound_{}.png".format(epoch)),
-                               np.transpose(located_sound_picture.cpu().numpy(), (1, 2, 0)))
-                    plt.imsave(os.path.join(args.train_dir, "example_images/epoch_source_{}.png".format(epoch)),
-                               np.transpose(picture.cpu().numpy(), (1, 2, 0)))
+                        located_sound_picture = located_sound_picture.squeeze()
+                        picture = picture.squeeze()
+                        output = output.squeeze()
+                        plt.imsave(os.path.join(args.train_dir, "example_images/epoch_sound_{}.png".format(epoch)),
+                                   np.transpose(located_sound_picture.cpu().numpy(), (1, 2, 0)))
+                        plt.imsave(os.path.join(args.train_dir, "example_images/epoch_source_{}.png".format(epoch)),
+                                   np.transpose(picture.cpu().numpy(), (1, 2, 0)))
 
-                    plt.imsave(os.path.join(args.train_dir, "example_images/epoch_final_{}.png".format(epoch)),
-                               np.transpose(output.cpu().numpy(), (1, 2, 0)))
-                    print("Example saved")
-                else:
-                    break
+                        plt.imsave(os.path.join(args.train_dir, "example_images/epoch_final_{}.png".format(epoch)),
+                                   np.transpose(output.cpu().numpy(), (1, 2, 0)))
+                        print("Example saved")
+                    else:
+                        break
 
         if (epoch + 1) % save_freq == 0:
             print('Saving model')
