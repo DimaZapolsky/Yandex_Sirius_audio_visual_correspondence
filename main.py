@@ -37,7 +37,7 @@ def parse_args():
     parser.add_argument('--generator-lr', default=1e-3, type=float, help='Learning rate for generator')
     parser.add_argument('--epoch-loss-freq', default=50, type=int, help='Number of epochs to print losses')
     parser.add_argument('--save-model-freq', default=300, type=int, help='Number of batches to save model')
-    parser.add_argument('--example-freq', default=400, type=int, help='Batches to print example')
+    parser.add_argument('--example-freq', default=1, type=int, help='Batches to print example')
     parser.add_argument('--train-dir', default='./train/', help='Path to training directory')
     parser.add_argument('--load-saved', default=True, type=bool, help='Flag to load')
     parser.add_argument('--gpu-count', default=1, type=int, help='Number of gpu')
@@ -73,7 +73,7 @@ def train(args):
             audio_dir=os.path.join(args.dev_set_dir, 'audios/dev'),
             video_dir=os.path.join(args.dev_set_dir, 'videos/dev'), random_crop=False), batch_size=batch_size)
 
-    data_val_loader = DataLoader(Dataset(height=height, width=width,
+    data_eval_loader = DataLoader(Dataset(height=height, width=width,
                                           fps=args.fps, frequency=args.freq, fragment_len=args.fragment_len,
                                           batch_size=batch_size,
                                           window_len=args.window_len, overlap_len=args.overlap_len,
@@ -236,11 +236,11 @@ def train(args):
             print('epoch [{} / {}]\t Test loss: {}'.format(epoch + 1, n_epoch, np.array(test_loss).mean()))
 
         if (epoch + 1) % example_freq == 0:
-            for batch_n, data in enumerate(data_val_loader, 0):
-                if test_batch_n == 0:
-                    picture = test_data[0][-1, 0, -1, :, :, :].to(device)
-                    video = test_data[0][-1:, 0, :, :, :, :].to(device)
-                    audio = test_data[1][-1:, 0, :].to(device)
+            for eval_batch_n, eval_data in enumerate(data_eval_loader, 0):
+                if eval_batch_n == 0:
+                    picture = eval_data[0][-1, 0, -1, :, :, :].to(device)
+                    video = eval_data[0][-1:, 0, :, :, :, :].to(device)
+                    audio = eval_data[1][-1:, 0, :].to(device)
 
                     picture = picture.permute([2, 0, 1])
                     video = video.permute([0, 1, 4, 2, 3])
@@ -285,6 +285,8 @@ def train(args):
                     plt.imsave(os.path.join(args.train_dir, "example_images/epoch_final_{}.png".format(epoch)),
                                np.transpose(output.cpu().numpy(), (1, 2, 0)))
                     print("Example saved")
+                else:
+                    break
 
         if (epoch + 1) % save_freq == 0:
             print('Saving model')
