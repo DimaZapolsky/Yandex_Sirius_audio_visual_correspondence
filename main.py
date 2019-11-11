@@ -224,9 +224,9 @@ def train(args):
                         test_loss.append(loss.data.item())
 
                     if test_batch_n == 0:
-                        picture = data[0][-1, 0, :, :, :, -1].to(device)
-                        video = data[0][-1:, 0, :, :, :, :].to(device)
-                        audio = data[1][-1:, 0, :].to(device)
+                        picture = test_data[0][-1, 0, -1, :, :, :].to(device)
+                        video = test_data[0][-1:, 0, :, :, :, :].to(device)
+                        audio = test_data[1][-1:, 0, :].to(device)
 
                         u_sample_res = u_model(audio_sum)
                         v_sample_res = v_model(video)
@@ -235,7 +235,8 @@ def train(args):
                         model_sample_answer = torch.mul(g_sample_res, audio_sum[:, None, None, :, :])
 
                         pca = sklearn.decomposition.PCA(n_components=3)
-                        vectors_square = model_sample_answer[-1, :, :, -1, :]
+                        vectors_square = model_sample_answer[-1, :, :, :, :]
+                        vectors_square = vectors_square.reshape(vectors_square.shape[:-2] + (-1,))
                         vectors_flatten = vectors_square.reshape(-1, vectors_square.shape[-1]).cpu().numpy()
                         rgb = pca.fit_transform(vectors_flatten)
 
@@ -252,9 +253,10 @@ def train(args):
                         x_out[:, :, :, 1] = torch.from_numpy(nyv).to(device)
 
                         located_sound_picture = F.grid_sample(full_sound, x_out)
+                        print(located_sound_picture.shape, picture.shape)
                         output = located_sound_picture * 0.3 + picture * 0.7
 
-                        fig = plt.figure(figsize=(8,8))
+                        fig = plt.figure(figsize=(8, 8))
                         plt.axis("off")
                         plt.imsave(os.path.join(args.train_dir, "example_images/epoch_{}.png".format(epoch)), np.transpose(output.cpu().numpy(), (1, 2, 0)))
                         print("Example saved")
