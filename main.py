@@ -17,7 +17,7 @@ from dataset import Dataset
 import time
 import adabound
 from audio import base
-from base import Unet
+from audio.base import Unet
 
 def parse_args():
     parser = argparse.ArgumentParser()
