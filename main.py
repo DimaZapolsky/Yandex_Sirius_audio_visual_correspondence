@@ -18,6 +18,9 @@ import time
 import adabound
 from audio import base
 from audio.base import Unet
+from librosa.core import istft
+from dataset.utils import get_picture_from_model_ans
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -48,6 +51,7 @@ def parse_args():
     parser.add_argument('--dev-loss-freq', default=1, type=int, help='Number of epochs to print dev loss')
     parser.add_argument('--batch-loss-freq', default=0, type=int, help='If 0 - never prints loss on batches')
     parser.add_argument('--depth', default=7, type=int, help='Depth of model')
+    parser.add_argument('--example-type', default='l1', help='What to print on example pictures')
     args = parser.parse_args()
     return args
 
@@ -97,6 +101,7 @@ def train(args):
     save_freq = args.save_model_freq
 
     example_freq = args.example_freq
+    example_type = args.example_type
 
     batch_count = len(data_loader)
 
@@ -165,7 +170,6 @@ def train(args):
                 video = video.permute([0, 1, 4, 2, 3])
                 v_res = v_model(video)
                 g_res = g_model(v_res, u_res)
-                #print(g_res.shape, (data[1][:, i, :].squeeze(1) > data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).shape)
 
                 weight = torch.log1p(audio_sum).squeeze(1)
                 weight = torch.clamp(weight, 1e-3, 10)
@@ -256,27 +260,8 @@ def train(args):
 
                         model_sample_answer = torch.mul(g_sample_res, audio_sum[:, None, :, :, :])
 
-                        pca = sklearn.decomposition.PCA(n_components=3)
-                        vectors_square = model_sample_answer[-1, :, :, :, :]
-                        vectors_square = vectors_square.reshape(vectors_square.shape[:-2] + (-1,))
-                        vectors_flatten = vectors_square.reshape(-1, vectors_square.shape[-1]).cpu().numpy()
-                        rgb = pca.fit_transform(vectors_flatten)
-                        rgb = rgb - np.min(rgb)
-                        rgb = rgb / np.max(rgb)
-
-                        rgb_picture = np.reshape(rgb, vectors_square.shape[:2] + (-1,))
-                        located_sound_picture = np.transpose(rgb_picture, [2, 0, 1])
-                        full_sound = torch.from_numpy(located_sound_picture).to(device)
-                        full_sound = full_sound[None, :, :, :]
-
-                        x_out = torch.zeros((1,) + picture.shape[1:] + (2,)).to(device)
-                        nx = np.linspace(-1, 1, picture.shape[1])
-                        ny = np.linspace(-1, 1, picture.shape[2])
-                        nxv, nyv = np.meshgrid(nx, ny)
-                        x_out[:, :, :, 0] = torch.from_numpy(nxv).to(device)
-                        x_out[:, :, :, 1] = torch.from_numpy(nyv).to(device)
-
-                        located_sound_picture = F.grid_sample(full_sound, x_out)
+                        located_sound_picture = get_picture_from_model_ans(model_sample_answer, example_type,
+                                                                           picture.shape, device)
 
                         output = located_sound_picture * 0.3 + picture * 0.7
 
