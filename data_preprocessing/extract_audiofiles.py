@@ -31,6 +31,14 @@ def extract_audio(args):
             os.path.join(dst_path, '.'.join(file.split('.')[:-1] + [args.format]))
         ))
 
+    src_path = os.path.join(args.src_dir, 'videos/silent')
+    dst_path = os.path.join(args.dst_dir, 'audios/silent')
+    for file in os.listdir(src_path):
+        os.system('ffmpeg -i {} -ab 192000 -f {} -ar {} -vn {}'.format(
+            os.path.join(src_path, file), args.format, args.freq,
+            os.path.join(dst_path, '.'.join(file.split('.')[:-1] + [args.format]))
+        ))
+
 
 def main():
     args = parse_args()
