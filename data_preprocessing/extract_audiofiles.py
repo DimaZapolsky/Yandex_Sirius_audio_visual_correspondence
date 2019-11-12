@@ -15,6 +15,7 @@ def parse_args():
 def extract_audio(args):
     os.makedirs(os.path.join(args.dst_dir, 'audios/solo/'), exist_ok=True)
     os.makedirs(os.path.join(args.dst_dir, 'audios/duet/'), exist_ok=True)
+    os.makedirs(os.path.join(args.dst_dir, 'audios/silent/'), exist_ok=True)
     src_path = os.path.join(args.src_dir, 'videos/solo')
     dst_path = os.path.join(args.dst_dir, 'audios/solo')
     for file in os.listdir(src_path):
