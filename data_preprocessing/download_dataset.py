@@ -17,6 +17,7 @@ def main():
     os.system('mkdir videos')
     os.system('mkdir videos/solo')
     os.system('mkdir videos/duet')
+    os.system('mkdir videos/silent')
 
     failed = 0
     success = 0
@@ -45,6 +46,16 @@ def main():
                     success += 1
                 else:
                     failed += 1
+
+    with open('silent_videos.txt', 'r') as file:
+        cnt = 0
+        for line in file.readlines():
+            os.system('youtube-dl --retries=10 {} -o videos/silent/{}.{}.mp4 -f 18'.format(line.strip(), cnt, 'silent'))
+            if does_file_exist('videos/silent/{}.{}.mp4'.format(cnt, 'silent')):
+                cnt += 1
+                success += 1
+            else:
+                failed += 1
 
     os.system('rm MUSIC_duet_videos.json')
     os.system('rm MUSIC_solo_videos.json')

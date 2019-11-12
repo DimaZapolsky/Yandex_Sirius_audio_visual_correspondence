@@ -61,7 +61,7 @@ def stereo_to_mono(wave):
     return (wave[:, 0] + wave[:, 1]) // 2
 
 
-def create_dataset_audios(args, src_path, dst_path):
+def create_dataset_audios(args, src_path, dst_path, silent=False):
     os.makedirs(dst_path, exist_ok=True)
     for file in os.listdir(src_path):
         if not os.path.isfile(os.path.join(src_path, file)) or not file.endswith('.wav'):
@@ -70,6 +70,8 @@ def create_dataset_audios(args, src_path, dst_path):
         if len(data.shape) > 1:
             data = stereo_to_mono(data)
         data = torch.Tensor(data)
+        if silent:
+            data *= 0
         torch.save(data, os.path.join(dst_path, file.split('.')[0] + '.pt'))
 
 
@@ -77,8 +79,10 @@ def main():
     args = parse_args()
     create_dataset_videos(args, os.path.join(args.src_dir, 'videos/solo'), os.path.join(args.dst_dir, 'videos/solo'))
     create_dataset_videos(args, os.path.join(args.src_dir, 'videos/duet'), os.path.join(args.dst_dir, 'videos/duet'))
+    create_dataset_videos(args, os.path.join(args.src_dir, 'videos/silent'), os.path.join(args.dst_dir, 'videos/silent'))
     create_dataset_audios(args, os.path.join(args.src_dir, 'audios/solo'), os.path.join(args.dst_dir, 'audios/solo'))
     create_dataset_audios(args, os.path.join(args.src_dir, 'audios/duet'), os.path.join(args.dst_dir, 'audios/duet'))
+    create_dataset_audios(args, os.path.join(args.src_dir, 'audios/silent'), os.path.join(args.dst_dir, 'audios/silent'))
 
 
 if __name__ == '__main__':
