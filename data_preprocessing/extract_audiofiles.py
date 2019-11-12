@@ -15,6 +15,7 @@ def parse_args():
 def extract_audio(args):
     os.makedirs(os.path.join(args.dst_dir, 'audios/solo/'), exist_ok=True)
     os.makedirs(os.path.join(args.dst_dir, 'audios/duet/'), exist_ok=True)
+    os.makedirs(os.path.join(args.dst_dir, 'audios/silent/'), exist_ok=True)
     src_path = os.path.join(args.src_dir, 'videos/solo')
     dst_path = os.path.join(args.dst_dir, 'audios/solo')
     for file in os.listdir(src_path):
@@ -25,6 +26,14 @@ def extract_audio(args):
 
     src_path = os.path.join(args.src_dir, 'videos/duet')
     dst_path = os.path.join(args.dst_dir, 'audios/duet')
+    for file in os.listdir(src_path):
+        os.system('ffmpeg -i {} -ab 192000 -f {} -ar {} -vn {}'.format(
+            os.path.join(src_path, file), args.format, args.freq,
+            os.path.join(dst_path, '.'.join(file.split('.')[:-1] + [args.format]))
+        ))
+
+    src_path = os.path.join(args.src_dir, 'videos/silent')
+    dst_path = os.path.join(args.dst_dir, 'audios/silent')
     for file in os.listdir(src_path):
         os.system('ffmpeg -i {} -ab 192000 -f {} -ar {} -vn {}'.format(
             os.path.join(src_path, file), args.format, args.freq,
