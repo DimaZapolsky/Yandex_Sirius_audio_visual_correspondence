@@ -110,7 +110,7 @@ def train(args):
 
     start_epoch = 0
 
-    Unet(generated_features=n_channels, depth=depth).to(device)
+    Unet(feature_channels=n_channels, depth=depth).to(device)
 
     if args.load_saved:
         try:
@@ -125,7 +125,7 @@ def train(args):
         except Exception as e:
             print('Loading failed')
             v_model = Video(n_channels, height, width, n_frames).to(device)
-            u_model = Unet(generated_features=n_channels, depth=depth).to(device)
+            u_model = Unet(feature_channels=n_channels, depth=depth).to(device)
             g_model = Generator(n_channels).to(device)
 
             opt_v = adabound.AdaBound(v_model.parameters(), lr=video_model_lr)
@@ -135,7 +135,7 @@ def train(args):
             start_epoch = 0
     else:
         v_model = Video(n_channels, height, width, n_frames).to(device)
-        u_model = Unet(generated_features=n_channels, depth=depth).to(device)
+        u_model = Unet(feature_channels=n_channels, depth=depth).to(device)
         g_model = Generator(n_channels).to(device)
 
         opt_v = adabound.AdaBound(v_model.parameters(), lr=video_model_lr)
