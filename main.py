@@ -159,27 +159,27 @@ def train(args):
     loss_test = []
 
 
-    # test_loss = []
-    # with torch.no_grad():
-    #     for test_batch_n, test_data in enumerate(data_test_loader, 0):
-    #         audio_sum = test_data[2].to(device) + 1e-10
-    #         for i in range(n_video):
-    #             video = test_data[0][:, i].to(device)
-    #
-    #             u_res = u_model(audio_sum)
-    #
-    #             video = video.permute([0, 1, 4, 2, 3])
-    #             v_res = v_model(video)
-    #             g_res = g_model(v_res, u_res)
-    #
-    #             weight = torch.log1p(audio_sum).squeeze(1)
-    #             weight = torch.clamp(weight, 1e-3, 10)
-    #
-    #             loss = F.binary_cross_entropy((g_res).squeeze(1), (test_data[1][:, i, :].squeeze(1) > test_data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).to(device), weight.to(device)).to(device)
-    #
-    #             test_loss.append(loss.data.item())
-    #
-    #     print('epoch [{} / {}]\t Test loss: {}'.format(-1, n_epoch, np.array(test_loss).mean()))
+    test_loss = []
+    with torch.no_grad():
+        for test_batch_n, test_data in enumerate(data_test_loader, 0):
+            audio_sum = test_data[2].to(device) + 1e-10
+            for i in range(n_video):
+                video = test_data[0][:, i].to(device)
+
+                u_res = u_model(audio_sum)
+
+                video = video.permute([0, 1, 4, 2, 3])
+                v_res = v_model(video)
+                g_res = g_model(v_res, u_res)
+
+                weight = torch.log1p(audio_sum).squeeze(1)
+                weight = torch.clamp(weight, 1e-3, 10)
+
+                loss = F.binary_cross_entropy((g_res).squeeze(1), (test_data[1][:, i, :].squeeze(1) > test_data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).to(device), weight.to(device)).to(device)
+
+                test_loss.append(loss.data.item())
+
+        print('epoch [{} / {}]\t Test loss: {}'.format(-1, n_epoch, np.array(test_loss).mean()))
 
     start_time = time.time()
     for epoch in range(start_epoch, n_epoch):
