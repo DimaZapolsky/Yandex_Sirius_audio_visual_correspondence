@@ -105,15 +105,18 @@ def get_picture(model_answer, picture_shape, device, original_height=512, log_ba
     delog = delog.squeeze(0)
     delog = np.stack((delog, delog, delog), axis=0)
 
-    image_low_res = torch.from_numpy(delog).to(device)[None, :]
+    delog = np.repeat(delog, 16, axis=1)
+    delog = np.repeat(delog, 16, axis=2)
 
-    x_out = torch.zeros((1,) + picture_shape[1:] + (2,)).to(device)
-    nx = np.linspace(-1, 1, picture_shape[1])
-    ny = np.linspace(-1, 1, picture_shape[2])
-    nxv, nyv = np.meshgrid(nx, ny)
-    x_out[:, :, :, 0] = torch.from_numpy(nxv).to(device)
-    x_out[:, :, :, 1] = torch.from_numpy(nyv).to(device)
+    #image_low_res = torch.from_numpy(delog).to(device)[None, :]
 
-    return F.grid_sample(image_low_res, x_out)
+    #x_out = torch.zeros((1,) + picture_shape[1:] + (2,)).to(device)
+    #nx = np.linspace(-1, 1, picture_shape[1])
+    #ny = np.linspace(-1, 1, picture_shape[2])
+    #nxv, nyv = np.meshgrid(nx, ny)
+    #x_out[:, :, :, 0] = torch.from_numpy(nxv).to(device)
+    #x_out[:, :, :, 1] = torch.from_numpy(nyv).to(device)
+
+    return torch.from_numpy(delog).to(device)
 
 
