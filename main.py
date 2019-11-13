@@ -219,9 +219,11 @@ def train(args):
 
                 v_res = v_model(video)
                 g_res = g_model(v_res, u_res)
-                print('U_RES:', u_res.shape, u_res.mean(), u_res.min(), u_res.max(), file=res_log_file)
-                print('V_RES:', v_res.shape, v_res.mean(), v_res.min(), v_res.max(), file=res_log_file)
-                print('G_RES:', g_res.shape, g_res.mean(), g_res.min(), g_res.max(), file=res_log_file)
+                print('U_RES:', u_res.shape, u_res.mean().item(), u_res.min().item(), u_res.max().item(), u_res.std().item(), file=res_log_file)
+                print('V_RES:', v_res.shape, v_res.mean().item(), v_res.min().item(), v_res.max().item(),
+                      v_res.std().item(), file=res_log_file)
+                print('G_RES:', g_res.shape, g_res.mean().item(), g_res.min().item(), g_res.max().item(),
+                      g_res.std().item(), file=res_log_file)
 
                 weight = torch.log1p(audio_sum).squeeze(1)
                 weight = torch.clamp(weight, 1e-3, 10)
