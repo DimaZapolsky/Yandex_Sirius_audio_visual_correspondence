@@ -113,7 +113,7 @@ def split_dataset(args):
         os.system('mv {} {}'.format(os.path.join(audio_src_path, 'silent/', str(silent_ind[i]) + '.pt'),
                                     os.path.join(audio_dst_path, 'test/', str(i + j) + '.pt')))
 
-    j = solo_cnt + duet_cnt - args.dev_solo - atgs.test_solo - args.dev_duet - args.test_duet - args.dev_silent - args.test_silent
+    j = solo_cnt + duet_cnt - args.dev_solo - args.test_solo - args.dev_duet - args.test_duet - args.dev_silent - args.test_silent
     for i in range(args.dev_silent + args.test_silent, len(silent_ind)):
         os.system('mv {} {}'.format(os.path.join(video_src_path, 'silent/', str(silent_ind[i]) + '.pt'),
                                     os.path.join(video_dst_path, 'train/', str(i + j) + '.pt')))

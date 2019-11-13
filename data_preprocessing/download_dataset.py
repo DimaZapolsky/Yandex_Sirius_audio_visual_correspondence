@@ -27,7 +27,7 @@ def main():
         videos = json.loads(file.read())
         for instrument in videos['videos']:
             for id in videos['videos'][instrument]:
-                os.system('youtube-dl --retries=10 {} -o videos/solo/{}.{}.mp4 -f 18'.format(id, cnt, instrument))
+                os.system('youtube-dl --retries=10 "{}" -o videos/solo/{}.{}.mp4 -f 18'.format(id, cnt, instrument))
                 if does_file_exist('videos/solo/{}.{}.mp4'.format(cnt, instrument)):
                     cnt += 1
                     success += 1
@@ -40,7 +40,7 @@ def main():
         for instrument in videos['videos']:
             for id in videos['videos'][instrument]:
                 instrument = instrument.replace(' ', '.')
-                os.system('youtube-dl --retries=10 {} -o videos/duet/{}.{}.mp4 -f 18'.format(id, cnt, instrument))
+                os.system('youtube-dl --retries=10 "{}" -o videos/duet/{}.{}.mp4 -f 18'.format(id, cnt, instrument))
                 if does_file_exist('videos/duet/{}.{}.mp4'.format(cnt, instrument)):
                     cnt += 1
                     success += 1
@@ -50,7 +50,7 @@ def main():
     with open('silent_videos.txt', 'r') as file:
         cnt = 0
         for line in file.readlines():
-            os.system('youtube-dl --retries=10 {} -o videos/silent/{}.{}.mp4 -f 18'.format(line.strip(), cnt, 'silent'))
+            os.system('youtube-dl --retries=10 "{}" -o videos/silent/{}.{}.mp4 -f 18'.format(line.strip(), cnt, 'silent'))
             if does_file_exist('videos/silent/{}.{}.mp4'.format(cnt, 'silent')):
                 cnt += 1
                 success += 1
