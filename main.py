@@ -123,7 +123,7 @@ def train(args):
         opt_cls = optim.Adam
         opt_kwargs = {}
     elif args.optimizer.lower() == 'adabound':
-        opt_cls = adabound.Adabound
+        opt_cls = adabound.AdaBound
         opt_kwargs = {}
     elif args.optimizer.lower() == 'sgd':
         opt_cls = optim.SGD
@@ -194,6 +194,7 @@ def train(args):
 
         print('epoch [{} / {}]\t Test loss: {}'.format(-1, n_epoch, np.array(test_loss).mean()))
 
+    os.makedirs(os.path.join(args.train_dir, 'logs/'), exist_ok=True)
     weight_log_file = open(os.path.join(args.train_dir, 'logs/weights.txt'), 'w')
 
     start_time = time.time()
