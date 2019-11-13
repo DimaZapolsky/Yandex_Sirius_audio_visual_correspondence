@@ -53,6 +53,7 @@ def parse_args():
     parser.add_argument('--depth', default=7, type=int, help='Depth of model')
     parser.add_argument('--example-type', default='l1', help='What to print on example pictures')
     parser.add_argument('--optimizer', default='SGD', help='Type of optimizer to use')
+    parser.add_argument('--audio-activation', default=None, help='Activation for audio model')
     args = parser.parse_args()
     return args
 
@@ -88,8 +89,8 @@ def train(args):
             fps=args.fps, frequency=args.freq, fragment_len=args.fragment_len,
             batch_size=batch_size,
             window_len=args.window_len, overlap_len=args.overlap_len,
-            audio_dir=os.path.join(args.dev_set_dir, 'audios/test'),
-            video_dir=os.path.join(args.dev_set_dir, 'videos/test'), random_crop=False, random_shuffle=False),
+            audio_dir=os.path.join(args.test_set_dir, 'audios/test'),
+            video_dir=os.path.join(args.test_set_dir, 'videos/test'), random_crop=False, random_shuffle=False),
             batch_size=batch_size)
 
     video_model_lr = args.video_model_lr  # learning rate for video model
@@ -115,6 +116,14 @@ def train(args):
     os.makedirs(os.path.join(args.train_dir, 'checkpoint/'), exist_ok=True)
 
     os.makedirs(os.path.join(args.train_dir, "example_images/"), exist_ok=True)
+
+    unet_activation = lambda x: x
+    if args.audio_activation.lower() == 'tanh':
+        unet_activation = torch.tanh
+    elif args.audio_activation.lower() == 'sigmoid':
+        unet_activation = torch.sigmoid
+    else:
+        raise TypeError("unknown activation")
 
     start_epoch = 0
 
@@ -145,7 +154,7 @@ def train(args):
         except Exception as e:
             print('Loading failed')
             v_model = Video(n_channels, height, width, n_frames).to(device)
-            u_model = Unet(feature_channels=n_channels, depth=depth).to(device)
+            u_model = Unet(feature_channels=n_channels, depth=depth, audio_activation=unet_activation).to(device)
             g_model = Generator(n_channels).to(device)
 
             opt_v = opt_cls(v_model.parameters(), lr=video_model_lr, **opt_kwargs)
@@ -155,7 +164,7 @@ def train(args):
             start_epoch = 0
     else:
         v_model = Video(n_channels, height, width, n_frames).to(device)
-        u_model = Unet(feature_channels=n_channels, depth=depth).to(device)
+        u_model = Unet(feature_channels=n_channels, depth=depth, audio_activation=unet_activation).to(device)
         g_model = Generator(n_channels).to(device)
 
         opt_v = opt_cls(v_model.parameters(), lr=video_model_lr, **opt_kwargs)
