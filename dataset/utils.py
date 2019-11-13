@@ -67,14 +67,13 @@ def get_pca_picture(model_answer, picture_shape, device):
 
 
 def get_picture(model_answer, picture_shape, device, original_height=512, log_base=21, hop_length=256, window_lenght=1022, type_lin='l1'):
-    model_answer = model_answer[-1:, :]
-    input_tmp = model_answer.reshape((1, -1) + model_answer.shape[-2:])
+    input_tmp = model_answer[-1:, :].reshape((1, -1) + model_answer.shape[-2:])
 
     x_out = torch.zeros(input_tmp.shape[0], original_height, model_answer.shape[-1], 2)
     xl = np.linspace(-1, 1, original_height)
     yl = np.linspace(-1, 1, model_answer.shape[-1])
 
-    xl = np.log(log_base, (xl * (log_base // 2) + (log_base // 2 + 1)))
+    xl = np.log((xl * (log_base // 2) + (log_base // 2 + 1))) / np.log(log_base) * 2 - 1
     nxv, nyv = np.meshgrid(xl, yl, indexing='ij')
 
     x_out[:, :, :, 0] = torch.from_numpy(nxv)
@@ -100,6 +99,7 @@ def get_picture(model_answer, picture_shape, device, original_height=512, log_ba
         delog = np.sum(delog, axis=3)
         delog = np.power(delog, 0.5)
         delog /= count
+
     delog /= np.max(delog)
 
     delog = delog.squeeze(0)
