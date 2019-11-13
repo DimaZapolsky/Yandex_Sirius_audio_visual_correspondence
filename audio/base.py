@@ -8,6 +8,7 @@ class Unet(torch.nn.Module):
             depth=5,  # hyperparameter: number of unet convolutions
             generated_features=64,  # hyperparameter: final number of feature maps
             use_dropout=False,
+            audio_activation=torch.nn.Tanh,
     ):
         super(Unet, self).__init__()
         self.min_depth = 5
@@ -49,11 +50,22 @@ class Unet(torch.nn.Module):
             submodule=self.unet_block,
             outermost=True
         )
+        def init_weights(m):
+            if isinstance(m, torch.nn.Conv2d):
+                m.weight.data.normal_(0.0, 0.001)
+            elif isinstance(m, torch.nn.BatchNorm2d):
+                m.weight.data.normal_(1.0, 0.02)
+                m.bias.data.fill_(0)
+            elif isinstance(m, torch.nn.Upsample):
+                m.weight.data.normal_(0.0, 0.0001)
+        self.unet_block.apply(init_weights)
+        self.batch_norm.apply(init_weights)
+        self.activation = audio_activation
 
     def forward(self, input_data):
         output_data = self.batch_norm(input_data)
         output_data = self.unet_block(output_data)
-        return output_data
+        return self.activation(output_data)
 
 
 class UnetBlock(torch.nn.Module):
