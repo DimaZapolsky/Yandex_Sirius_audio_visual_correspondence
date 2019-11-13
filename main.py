@@ -52,6 +52,7 @@ def parse_args():
     parser.add_argument('--batch-loss-freq', default=0, type=int, help='If 0 - never prints loss on batches')
     parser.add_argument('--depth', default=7, type=int, help='Depth of model')
     parser.add_argument('--example-type', default='l1', help='What to print on example pictures')
+    parser.add_argument('--optimizer', default='SGD', help='Type of optimizer to use')
     args = parser.parse_args()
     return args
 
@@ -118,15 +119,27 @@ def train(args):
 
     Unet(feature_channels=n_channels, depth=depth).to(device)
 
+    if args.optimizer.lower() == 'adam':
+        opt_cls = optim.Adam
+        opt_kwargs = {}
+    elif args.optimizer.lower() == 'adabound':
+        opt_cls = adabound.Adabound
+        opt_kwargs = {}
+    elif args.optimizer.lower() == 'sgd':
+        opt_cls = optim.SGD
+        opt_kwargs = {'momentum': 0.9, 'weight_decay': 1e-4}
+    else:
+        raise TypeError("unknown optimizer")
+
     if args.load_saved:
         try:
             start_epoch = torch.load(path_epoch)
             u_model = torch.load(path_u.format(start_epoch)).to(device)
             v_model = torch.load(path_v.format(start_epoch)).to(device)
             g_model = torch.load(path_g.format(start_epoch)).to(device)
-            opt_v = optim.SGD(v_model.parameters(), lr=video_model_lr, momentum=0.9, weight_decay=1e-4)
-            opt_u = optim.SGD(u_model.parameters(), lr=audio_model_lr, momentum=0.9, weight_decay=1e-4)
-            opt_g = optim.SGD(g_model.parameters(), lr=generator_lr, momentum=0.9, weight_decay=1e-4)
+            opt_v = opt_cls(v_model.parameters(), lr=video_model_lr, **opt_kwargs)
+            opt_u = opt_cls(u_model.parameters(), lr=audio_model_lr, **opt_kwargs)
+            opt_g = opt_cls(g_model.parameters(), lr=generator_lr, **opt_kwargs)
 
         except Exception as e:
             print('Loading failed')
@@ -134,9 +147,9 @@ def train(args):
             u_model = Unet(feature_channels=n_channels, depth=depth).to(device)
             g_model = Generator(n_channels).to(device)
 
-            opt_v = optim.SGD(v_model.parameters(), lr=video_model_lr, momentum=0.9, weight_decay=1e-4)
-            opt_u = optim.SGD(u_model.parameters(), lr=audio_model_lr, momentum=0.9, weight_decay=1e-4)
-            opt_g = optim.SGD(g_model.parameters(), lr=generator_lr, momentum=0.9, weight_decay=1e-4)
+            opt_v = opt_cls(v_model.parameters(), lr=video_model_lr, **opt_kwargs)
+            opt_u = opt_cls(u_model.parameters(), lr=audio_model_lr, **opt_kwargs)
+            opt_g = opt_cls(g_model.parameters(), lr=generator_lr, **opt_kwargs)
 
             start_epoch = 0
     else:
@@ -144,10 +157,10 @@ def train(args):
         u_model = Unet(feature_channels=n_channels, depth=depth).to(device)
         g_model = Generator(n_channels).to(device)
 
-        opt_v = optim.SGD(v_model.parameters(), lr=video_model_lr, momentum=0.9, weight_decay=1e-4)
-        opt_u = optim.SGD(u_model.parameters(), lr=audio_model_lr, momentum=0.9, weight_decay=1e-4)
-        opt_g = optim.SGD(g_model.parameters(), lr=generator_lr, momentum=0.9, weight_decay=1e-4)
-
+        opt_v = opt_cls(v_model.parameters(), lr=video_model_lr, **opt_kwargs)
+        opt_u = opt_cls(u_model.parameters(), lr=audio_model_lr, **opt_kwargs)
+        opt_g = opt_cls(g_model.parameters(), lr=generator_lr, **opt_kwargs)
+        
         start_epoch = 0
 
     if device.type == 'cuda' and n_gpu > 1:
