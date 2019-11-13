@@ -199,9 +199,7 @@ def train(args):
 
                 video = video.permute([0, 1, 4, 2, 3])
 
-                print(video.shape)
                 v_res = v_model(video)
-                print(video.shape, v_res.shape)
                 g_res = g_model(v_res, u_res)
 
                 weight = torch.log1p(audio_sum).squeeze(1)
