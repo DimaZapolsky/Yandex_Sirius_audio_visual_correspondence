@@ -160,7 +160,7 @@ def train(args):
         opt_v = opt_cls(v_model.parameters(), lr=video_model_lr, **opt_kwargs)
         opt_u = opt_cls(u_model.parameters(), lr=audio_model_lr, **opt_kwargs)
         opt_g = opt_cls(g_model.parameters(), lr=generator_lr, **opt_kwargs)
-        
+
         start_epoch = 0
 
     if device.type == 'cuda' and n_gpu > 1:
@@ -193,6 +193,8 @@ def train(args):
                 test_loss.append(loss.data.item())
 
         print('epoch [{} / {}]\t Test loss: {}'.format(-1, n_epoch, np.array(test_loss).mean()))
+
+    weight_log_file = open(os.path.join(args.train_dir, 'logs/weights.txt'), 'w')
 
     start_time = time.time()
     for epoch in range(start_epoch, n_epoch):
@@ -230,6 +232,10 @@ def train(args):
 
             if batch_loss_freq != 0 and (batch_n + 1) % batch_loss_freq == 0:
                 print('batch: {:<10}   |   Loss: {:<20}    |    average time per batch: {:<20}'.format(batch_n + 1, np.array(losses).mean(), (time.time() - start_time) / (batch_n + 1)))
+                print('WEIGHTS:', g_model.weights, file=weight_log_file)
+                print('BIAS:', g_model.bias, file=weight_log_file)
+                print('WEIGHTS GRAD:', g_model.weights.grad, file=weight_log_file)
+                print('BIAS GRAD:', g_model.bias.grad, file=weight_log_file)
 
         if (epoch + 1) % epoch_loss_freq == 0:
             print('epoch: [{:<4} / {:<4}]   |   TRAIN_LOSS: {:<20}   |   average time per epoch: {}'.format(epoch + 1, n_epoch, np.array(losses).mean(), (time.time() - start_time) / (epoch + 1)))
