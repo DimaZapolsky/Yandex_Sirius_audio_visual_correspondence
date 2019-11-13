@@ -233,13 +233,13 @@ def train(args):
 
             if batch_loss_freq != 0 and (batch_n + 1) % batch_loss_freq == 0:
                 print('batch: {:<10}   |   Loss: {:<20}    |    average time per batch: {:<20}'.format(batch_n + 1, np.array(losses).mean(), (time.time() - start_time) / (batch_n + 1)))
-                print('WEIGHTS:', g_model.weights, file=weight_log_file)
-                print('BIAS:', g_model.bias, file=weight_log_file)
-                print('WEIGHTS GRAD:', g_model.weights.grad, file=weight_log_file)
-                print('BIAS GRAD:', g_model.bias.grad, file=weight_log_file)
 
         if (epoch + 1) % epoch_loss_freq == 0:
             print('epoch: [{:<4} / {:<4}]   |   TRAIN_LOSS: {:<20}   |   average time per epoch: {}'.format(epoch + 1, n_epoch, np.array(losses).mean(), (time.time() - start_time) / (epoch + 1)))
+            print('WEIGHTS:', g_model.weights, file=weight_log_file)
+            print('BIAS:', g_model.bias, file=weight_log_file)
+            print('WEIGHTS GRAD:', g_model.weights.grad, file=weight_log_file)
+            print('BIAS GRAD:', g_model.bias.grad, file=weight_log_file)
 
         if (epoch + 1) % args.dev_loss_freq == 0:
             test_loss = []
