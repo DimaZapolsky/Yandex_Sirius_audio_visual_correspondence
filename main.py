@@ -73,7 +73,7 @@ def train(args):
             fps=args.fps, frequency=args.freq, fragment_len=args.fragment_len, batch_size=batch_size,
             window_len=args.window_len, overlap_len=args.overlap_len,
             audio_dir=os.path.join(args.train_set_dir, 'audios/train'),
-            video_dir=os.path.join(args.train_set_dir, 'videos/train'), random_crop=False), batch_size=batch_size)
+            video_dir=os.path.join(args.train_set_dir, 'videos/train'), random_crop=True), batch_size=batch_size)
 
     data_test_loader = DataLoader(Dataset(height=height, width=width,
             fps=args.fps, frequency=args.freq, fragment_len=args.fragment_len, batch_size=batch_size,
@@ -123,9 +123,9 @@ def train(args):
             u_model = torch.load(path_u.format(start_epoch)).to(device)
             v_model = torch.load(path_v.format(start_epoch)).to(device)
             g_model = torch.load(path_g.format(start_epoch)).to(device)
-            opt_v = adabound.AdaBound(v_model.parameters(), lr=video_model_lr)
-            opt_u = adabound.AdaBound(u_model.parameters(), lr=audio_model_lr)
-            opt_g = adabound.AdaBound(g_model.parameters(), lr=generator_lr)
+            opt_v = optim.SGD(v_model.parameters(), lr=video_model_lr, momentum=0.9, weight_decay=1e-4)
+            opt_u = optim.SGD(u_model.parameters(), lr=audio_model_lr, momentum=0.9, weight_decay=1e-4)
+            opt_g = optim.SGD(g_model.parameters(), lr=generator_lr, momentum=0.9, weight_decay=1e-4)
 
         except Exception as e:
             print('Loading failed')
@@ -133,9 +133,9 @@ def train(args):
             u_model = Unet(feature_channels=n_channels, depth=depth).to(device)
             g_model = Generator(n_channels).to(device)
 
-            opt_v = adabound.AdaBound(v_model.parameters(), lr=video_model_lr)
-            opt_u = adabound.AdaBound(u_model.parameters(), lr=audio_model_lr)
-            opt_g = adabound.AdaBound(g_model.parameters(), lr=generator_lr)
+            opt_v = optim.SGD(v_model.parameters(), lr=video_model_lr, momentum=0.9, weight_decay=1e-4)
+            opt_u = optim.SGD(u_model.parameters(), lr=audio_model_lr, momentum=0.9, weight_decay=1e-4)
+            opt_g = optim.SGD(g_model.parameters(), lr=generator_lr, momentum=0.9, weight_decay=1e-4)
 
             start_epoch = 0
     else:
@@ -143,9 +143,9 @@ def train(args):
         u_model = Unet(feature_channels=n_channels, depth=depth).to(device)
         g_model = Generator(n_channels).to(device)
 
-        opt_v = adabound.AdaBound(v_model.parameters(), lr=video_model_lr)
-        opt_u = adabound.AdaBound(u_model.parameters(), lr=audio_model_lr)
-        opt_g = adabound.AdaBound(g_model.parameters(), lr=generator_lr)
+        opt_v = optim.SGD(v_model.parameters(), lr=video_model_lr, momentum=0.9, weight_decay=1e-4)
+        opt_u = optim.SGD(u_model.parameters(), lr=audio_model_lr, momentum=0.9, weight_decay=1e-4)
+        opt_g = optim.SGD(g_model.parameters(), lr=generator_lr, momentum=0.9, weight_decay=1e-4)
 
         start_epoch = 0
 
