@@ -74,7 +74,8 @@ def train(args):
             fps=args.fps, frequency=args.freq, fragment_len=args.fragment_len, batch_size=batch_size,
             window_len=args.window_len, overlap_len=args.overlap_len,
             audio_dir=os.path.join(args.train_set_dir, 'audios/train'),
-            video_dir=os.path.join(args.train_set_dir, 'videos/train')), batch_size=batch_size)
+            video_dir=os.path.join(args.train_set_dir, 'videos/train'), random_crop=False, random_shuffle=False),
+            batch_size=batch_size)
 
     data_test_loader = DataLoader(Dataset(height=height, width=width,
             fps=args.fps, frequency=args.freq, fragment_len=args.fragment_len, batch_size=batch_size,
@@ -218,9 +219,9 @@ def train(args):
 
                 v_res = v_model(video)
                 g_res = g_model(v_res, u_res)
-                print('U_RES:', u_res.shape, u_res.mean(), u_res.min()[0], u_res.max()[0], file=res_log_file)
-                print('V_RES:', v_res.shape, v_res.mean(), v_res.min()[0], v_res.max()[0], file=res_log_file)
-                print('G_RES:', g_res.shape, g_res.mean(), g_res.min()[0], g_res.max()[0], file=res_log_file)
+                print('U_RES:', u_res.shape, u_res.mean(), u_res.min(), u_res.max(), file=res_log_file)
+                print('V_RES:', v_res.shape, v_res.mean(), v_res.min(), v_res.max(), file=res_log_file)
+                print('G_RES:', g_res.shape, g_res.mean(), g_res.min(), g_res.max(), file=res_log_file)
 
                 weight = torch.log1p(audio_sum).squeeze(1)
                 weight = torch.clamp(weight, 1e-3, 10)
