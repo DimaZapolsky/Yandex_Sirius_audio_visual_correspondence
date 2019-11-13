@@ -73,21 +73,22 @@ def train(args):
             fps=args.fps, frequency=args.freq, fragment_len=args.fragment_len, batch_size=batch_size,
             window_len=args.window_len, overlap_len=args.overlap_len,
             audio_dir=os.path.join(args.train_set_dir, 'audios/train'),
-            video_dir=os.path.join(args.train_set_dir, 'videos/train'), random_crop=True), batch_size=batch_size)
+            video_dir=os.path.join(args.train_set_dir, 'videos/train')), batch_size=batch_size)
 
     data_test_loader = DataLoader(Dataset(height=height, width=width,
             fps=args.fps, frequency=args.freq, fragment_len=args.fragment_len, batch_size=batch_size,
             window_len=args.window_len, overlap_len=args.overlap_len,
             audio_dir=os.path.join(args.dev_set_dir, 'audios/dev'),
-            video_dir=os.path.join(args.dev_set_dir, 'videos/dev'), random_crop=False), batch_size=batch_size)
+            video_dir=os.path.join(args.dev_set_dir, 'videos/dev'), random_crop=False, random_shuffle=False),
+            batch_size=batch_size)
 
     data_eval_loader = DataLoader(Dataset(height=height, width=width,
-                                          fps=args.fps, frequency=args.freq, fragment_len=args.fragment_len,
-                                          batch_size=batch_size,
-                                          window_len=args.window_len, overlap_len=args.overlap_len,
-                                          audio_dir=os.path.join(args.dev_set_dir, 'audios/test'),
-                                          video_dir=os.path.join(args.dev_set_dir, 'videos/test'), random_crop=False),
-                                  batch_size=batch_size)
+            fps=args.fps, frequency=args.freq, fragment_len=args.fragment_len,
+            batch_size=batch_size,
+            window_len=args.window_len, overlap_len=args.overlap_len,
+            audio_dir=os.path.join(args.dev_set_dir, 'audios/test'),
+            video_dir=os.path.join(args.dev_set_dir, 'videos/test'), random_crop=False, random_shuffle=False),
+            batch_size=batch_size)
 
     video_model_lr = args.video_model_lr  # learning rate for video model
     audio_model_lr = args.audio_model_lr  # learning rate for audio model
@@ -158,27 +159,27 @@ def train(args):
     loss_test = []
 
 
-    test_loss = []
-    with torch.no_grad():
-        for test_batch_n, test_data in enumerate(data_test_loader, 0):
-            audio_sum = test_data[2].to(device) + 1e-10
-            for i in range(n_video):
-                video = test_data[0][:, i].to(device)
-
-                u_res = u_model(audio_sum)
-
-                video = video.permute([0, 1, 4, 2, 3])
-                v_res = v_model(video)
-                g_res = g_model(v_res, u_res)
-
-                weight = torch.log1p(audio_sum).squeeze(1)
-                weight = torch.clamp(weight, 1e-3, 10)
-
-                loss = F.binary_cross_entropy((g_res).squeeze(1), (test_data[1][:, i, :].squeeze(1) > test_data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).to(device), weight.to(device)).to(device)
-
-                test_loss.append(loss.data.item())
-
-        print('epoch [{} / {}]\t Test loss: {}'.format(-1, n_epoch, np.array(test_loss).mean()))
+    # test_loss = []
+    # with torch.no_grad():
+    #     for test_batch_n, test_data in enumerate(data_test_loader, 0):
+    #         audio_sum = test_data[2].to(device) + 1e-10
+    #         for i in range(n_video):
+    #             video = test_data[0][:, i].to(device)
+    #
+    #             u_res = u_model(audio_sum)
+    #
+    #             video = video.permute([0, 1, 4, 2, 3])
+    #             v_res = v_model(video)
+    #             g_res = g_model(v_res, u_res)
+    #
+    #             weight = torch.log1p(audio_sum).squeeze(1)
+    #             weight = torch.clamp(weight, 1e-3, 10)
+    #
+    #             loss = F.binary_cross_entropy((g_res).squeeze(1), (test_data[1][:, i, :].squeeze(1) > test_data[1][:, 1 - i, :].squeeze(1)).type(torch.Tensor).to(device), weight.to(device)).to(device)
+    #
+    #             test_loss.append(loss.data.item())
+    #
+    #     print('epoch [{} / {}]\t Test loss: {}'.format(-1, n_epoch, np.array(test_loss).mean()))
 
     start_time = time.time()
     for epoch in range(start_epoch, n_epoch):
@@ -197,7 +198,10 @@ def train(args):
                 u_res = u_model(audio_sum)
 
                 video = video.permute([0, 1, 4, 2, 3])
+
+                print(video.shape)
                 v_res = v_model(video)
+                print(video.shape, v_res.shape)
                 g_res = g_model(v_res, u_res)
 
                 weight = torch.log1p(audio_sum).squeeze(1)

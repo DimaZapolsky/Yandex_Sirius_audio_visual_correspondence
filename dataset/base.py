@@ -16,7 +16,8 @@ class Dataset(torch.utils.data.Dataset):
             audio_dir, video_dir,
             window_len, overlap_len,
             n_fragments=2,
-            random_crop=True
+            random_crop=True,
+            random_shuffle=True
     ):
         self.height = height
         self.width = width
@@ -39,6 +40,7 @@ class Dataset(torch.utils.data.Dataset):
         self.n_fragments = n_fragments
 
         self.random_crop = random_crop
+        self.random_shuffle = random_shuffle
 
     def update_permute(self):
         self.load_order = torch.randperm(self.dataset_size)
@@ -77,7 +79,7 @@ class Dataset(torch.utils.data.Dataset):
         return self.normalize_video_2(video, mean=torch.Tensor([0.485, 0.456, 0.406]), std=torch.Tensor([0.229, 0.224, 0.225])), audio
 
     def __getitem__(self, index):
-        if index == 0:
+        if index == 0 and self.random_shuffle:
             self.update_permute()
 
         videos = []
