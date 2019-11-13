@@ -27,7 +27,7 @@ class Video(nn.Module):
 
         self.main.add_module("conv_k", nn.Conv2d(512, n_channels, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)))
 
-        self.tmp_conv = nn.AdaptiveMaxPool3d(output_size=(1, height, width))
+        self.tmp_conv = nn.AdaptiveMaxPool3d(output_size=(1, height // 16, width // 16))
 
         self.activation = nn.Sigmoid()
 
