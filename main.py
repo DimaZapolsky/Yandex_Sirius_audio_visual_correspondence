@@ -196,6 +196,7 @@ def train(args):
 
     os.makedirs(os.path.join(args.train_dir, 'logs/'), exist_ok=True)
     weight_log_file = open(os.path.join(args.train_dir, 'logs/weights.txt'), 'w')
+    res_log_file = open(os.path.join(args.train_dir, 'logs/res.txt'), 'w')
 
     start_time = time.time()
     for epoch in range(start_epoch, n_epoch):
@@ -217,6 +218,9 @@ def train(args):
 
                 v_res = v_model(video)
                 g_res = g_model(v_res, u_res)
+                print('U_RES:', u_res, file=res_log_file)
+                print('V_RES:', v_res, file=res_log_file)
+                print('G_RES:', g_res, file=res_log_file)
 
                 weight = torch.log1p(audio_sum).squeeze(1)
                 weight = torch.clamp(weight, 1e-3, 10)
