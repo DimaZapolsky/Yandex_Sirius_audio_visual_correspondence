@@ -56,8 +56,7 @@ class Unet(torch.nn.Module):
             elif isinstance(m, torch.nn.BatchNorm2d):
                 m.weight.data.normal_(1.0, 0.02)
                 m.bias.data.fill_(0)
-            elif isinstance(m, torch.nn.Upsample):
-                m.weight.data.normal_(0.0, 0.0001)
+
         self.unet_block.apply(init_weights)
         self.batch_norm.apply(init_weights)
         self.activation = audio_activation
