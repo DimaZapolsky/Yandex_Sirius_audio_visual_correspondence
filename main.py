@@ -54,6 +54,8 @@ def parse_args():
     parser.add_argument('--example-type', default='l1', help='What to print on example pictures')
     parser.add_argument('--optimizer', default='SGD', help='Type of optimizer to use')
     parser.add_argument('--audio-activation', default=None, help='Activation for audio model')
+    parser.add_argument('--use-dropout', default=False, type=bool, help='Use dropout')
+    parser.add_argument('--dropout-p', default=0.5, type=float, help='P in dropout')
     args = parser.parse_args()
     return args
 
@@ -70,6 +72,8 @@ def train(args):
     n_gpu = args.gpu_count
     depth = args.depth
     device = torch.device("cuda:0" if (torch.cuda.is_available() and n_gpu > 0) else "cpu")
+    use_dropout = args.use_dropout
+    dropout_p = args.dropout_p
 
     data_loader = DataLoader(Dataset(height=height, width=width,
             fps=args.fps, frequency=args.freq, fragment_len=args.fragment_len, batch_size=batch_size,
@@ -129,7 +133,7 @@ def train(args):
 
     start_epoch = 0
 
-    Unet(feature_channels=n_channels, depth=depth).to(device)
+    Unet(feature_channels=n_channels, depth=depth, use_dropout=use_dropout, dropout_p=dropout_p).to(device)
 
     if args.optimizer.lower() == 'adam':
         opt_cls = optim.Adam
@@ -156,7 +160,7 @@ def train(args):
         except Exception as e:
             print('Loading failed')
             v_model = Video(n_channels, height, width, n_frames).to(device)
-            u_model = Unet(feature_channels=n_channels, depth=depth, audio_activation=unet_activation).to(device)
+            u_model = Unet(feature_channels=n_channels, depth=depth, audio_activation=unet_activation, use_dropout=use_dropout, dropout_p=dropout_p).to(device)
             g_model = Generator(n_channels).to(device)
 
             opt_v = opt_cls(v_model.parameters(), lr=video_model_lr, **opt_kwargs)
@@ -166,7 +170,7 @@ def train(args):
             start_epoch = 0
     else:
         v_model = Video(n_channels, height, width, n_frames).to(device)
-        u_model = Unet(feature_channels=n_channels, depth=depth, audio_activation=unet_activation).to(device)
+        u_model = Unet(feature_channels=n_channels, depth=depth, audio_activation=unet_activation, use_dropout=use_dropout, dropout_p=dropout_p).to(device)
         g_model = Generator(n_channels).to(device)
 
         opt_v = opt_cls(v_model.parameters(), lr=video_model_lr, **opt_kwargs)

@@ -8,6 +8,7 @@ class Unet(torch.nn.Module):
             depth=5,  # hyperparameter: number of unet convolutions
             generated_features=64,  # hyperparameter: final number of feature maps
             use_dropout=False,
+            dropout_p=0.5,
             audio_activation=torch.nn.Tanh,
     ):
         super(Unet, self).__init__()
@@ -17,7 +18,8 @@ class Unet(torch.nn.Module):
         self.unet_block = UnetBlock(
             output_channels=generated_features * 8,
             inner_input_channels=generated_features * 8,
-            innermost=True
+            innermost=True,
+            dropout_p=dropout_p,
         )
 
         for _ in range(depth - self.min_depth):
@@ -25,30 +27,35 @@ class Unet(torch.nn.Module):
                 output_channels=generated_features * 8,
                 inner_input_channels=generated_features * 8,
                 submodule=self.unet_block,
-                use_dropout=use_dropout
+                use_dropout=use_dropout,
+                dropout_p=dropout_p,
             )
 
         self.unet_block = UnetBlock(
             output_channels=generated_features * 4,
             inner_input_channels=generated_features * 8,
-            submodule=self.unet_block
+            submodule=self.unet_block,
+            dropout_p=dropout_p,
         )
         self.unet_block = UnetBlock(
             output_channels=generated_features * 2,
             inner_input_channels=generated_features * 4,
-            submodule=self.unet_block
+            submodule=self.unet_block,
+            dropout_p=dropout_p,
         )
         self.unet_block = UnetBlock(
             output_channels=generated_features,
             inner_input_channels=generated_features * 2,
-            submodule=self.unet_block
+            submodule=self.unet_block,
+            dropout_p=dropout_p,
         )
         self.unet_block = UnetBlock(
             output_channels=feature_channels,
             inner_input_channels=generated_features,
             input_channels=1,
             submodule=self.unet_block,
-            outermost=True
+            outermost=True,
+            dropout_p=dropout_p,
         )
         def init_weights(m):
             if isinstance(m, torch.nn.Conv2d):
@@ -75,6 +82,7 @@ class UnetBlock(torch.nn.Module):
             outermost=False, innermost=False,
             use_dropout=False, noskip=False,
             submodule=None,
+            dropout_p=0.5,
     ):
         super(UnetBlock, self).__init__()
         self.outermost = outermost
@@ -144,7 +152,7 @@ class UnetBlock(torch.nn.Module):
             model += [submodule]
         model += up
         if use_dropout:
-            model += [torch.nn.Dropout(0.5)]
+            model += [torch.nn.Dropout(dropout_p)]
 
         self.model = torch.nn.Sequential(*model)
 
