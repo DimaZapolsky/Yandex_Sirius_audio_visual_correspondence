@@ -119,9 +119,9 @@ def train(args):
 
     unet_activation = lambda x: x
     if args.audio_activation.lower() == 'tanh':
-        unet_activation = nn.Tanh
+        unet_activation = nn.Tanh()
     elif args.audio_activation.lower() == 'sigmoid':
-        unet_activation = nn.Sigmoid
+        unet_activation = nn.Sigmoid()
     else:
         raise TypeError("unknown activation")
 

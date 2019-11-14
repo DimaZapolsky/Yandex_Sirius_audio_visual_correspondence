@@ -60,7 +60,7 @@ class Generator(nn.Module):
 
         self.tuner = nn.Parameter(torch.Tensor(1))
 
-        nn.init.constant_(self.weights, 1 / 32)
+        nn.init.constant_(self.weights, 1)
         nn.init.constant_(self.bias, 0)
         nn.init.constant_(self.tuner, 1)
 
