@@ -280,7 +280,7 @@ def train(args):
                         weight = torch.log1p(audio_sum).squeeze(1)
                         weight = torch.clamp(weight, 1e-3, 10)
 
-                        loss = F.binary_cross_entropy(g_res.squeeze(1), (test_data[1][:, i, :].to(device).squeeze(1) > (audio_sum.squeeze(1) / n_video)).type(torch.Tensor).to(device), weight.to(device)).to(device)
+                        loss = F.binary_cross_entropy(g_res.squeeze(1), (test_data[1][:, i, :].to(device).squeeze(1) > (audio_sum.squeeze(1) / n_video)).type(torch.Tensor).to(device), weight=weight.to(device)).to(device)
 
                         test_loss.append(loss.data.item())
 
