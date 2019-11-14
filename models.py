@@ -31,9 +31,9 @@ class Video(nn.Module):
 
         self.activation = nn.Sigmoid()
 
-        self.main[-2].apply(init)
-        self.main[-1].apply(init)
-        self.tmp_conv.apply(init)
+        #self.main[-2].apply(init)
+        #self.main[-1].apply(init)
+        #self.tmp_conv.apply(init)
 
     def forward(self, input):
         x = input.reshape((-1, 3, self.height, self.width))
@@ -66,7 +66,7 @@ class Generator(nn.Module):
 
     def forward(self, inputV, inputA):  # inputV.shape = [bs, K, h // 16, w // 16], inputA.shape = [bs, K, audH, audW]
         input_V_flattened = inputV.view(inputV.shape[0], self.n_channels, -1)
-        input_V_flattened, _ = input_V_flattened.max(2, keepdim=True)
+        input_V_flattened = input_V_flattened.mean(2, keepdim=True)
         input_A_flattened = inputA.view(inputA.shape[0], self.n_channels, -1)
 
         input_V_flattened = input_V_flattened.permute([0, 2, 1])
