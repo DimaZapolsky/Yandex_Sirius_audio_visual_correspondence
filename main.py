@@ -191,10 +191,10 @@ def train(args):
             for i in range(n_video):
                 video = test_data[0][:, i].to(device)
 
-                u_res = u_model(torch.log(audio_sum).detatch())
+                u_res = u_model(torch.log(audio_sum).detach())
 
                 video = video.permute([0, 1, 4, 2, 3])
-                v_res = v_model(video.detatch())
+                v_res = v_model(video.detach())
                 g_res = g_model(v_res, u_res)
 
                 weight = torch.log1p(audio_sum).squeeze(1)
@@ -224,7 +224,7 @@ def train(args):
 
                 video = data[0][:, i].to(device)
 
-                u_res = u_model(torch.log(audio_sum).detatch())
+                u_res = u_model(torch.log(audio_sum).detach())
 
                 video = video.permute([0, 1, 4, 2, 3])
 
@@ -267,7 +267,7 @@ def train(args):
                     for i in range(n_video):
                         video = test_data[0][:, i].to(device)
 
-                        u_res = u_model(torch.log(audio_sum).detatch())
+                        u_res = u_model(torch.log(audio_sum).detach())
 
                         video = video.permute([0, 1, 4, 2, 3])
                         v_res = v_model(video)
@@ -294,7 +294,7 @@ def train(args):
                         picture = picture.permute([2, 0, 1])
                         video = video.permute([0, 1, 4, 2, 3])
 
-                        u_sample_res = u_model(torch.log(audio_sum).detatch())
+                        u_sample_res = u_model(torch.log(audio_sum).detach())
                         v_sample_res = v_model(video)
                         g_sample_res = g_model.forward_pixelwise(v_sample_res, u_sample_res)
 
