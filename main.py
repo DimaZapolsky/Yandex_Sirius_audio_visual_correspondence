@@ -197,6 +197,7 @@ def train(args):
 
                 u_res = u_model(torch.log(audio_sum).detach())
 
+                u_model.eval()
                 video = video.permute([0, 1, 4, 2, 3])
                 v_res = v_model(video.detach())
                 g_res = g_model(v_res, u_res)
@@ -207,6 +208,7 @@ def train(args):
                 loss = F.binary_cross_entropy((g_res).squeeze(1), (test_data[1][:, i, :].to(device).squeeze(1) > (audio_sum.squeeze(1) / n_video)).type(torch.Tensor).to(device), weight.to(device)).to(device)
 
                 test_loss.append(loss.data.item())
+                u_model.train()
 
         print('epoch [{} / {}]\t Test loss: {}'.format(-1, n_epoch, np.array(test_loss).mean()))
 
@@ -270,7 +272,7 @@ def train(args):
                     audio_sum = test_data[2].to(device) + 1e-10
                     for i in range(n_video):
                         video = test_data[0][:, i].to(device)
-
+                        u_model.eval()
                         u_res = u_model(torch.log(audio_sum).detach())
 
                         video = video.permute([0, 1, 4, 2, 3])
@@ -283,6 +285,7 @@ def train(args):
                         loss = F.binary_cross_entropy(g_res.squeeze(1), (test_data[1][:, i, :].to(device).squeeze(1) > (audio_sum.squeeze(1) / n_video)).type(torch.Tensor).to(device), weight=weight.to(device)).to(device)
 
                         test_loss.append(loss.data.item())
+                        u_model.train()
 
             loss_test.append(np.array(test_loss).mean())
             print('epoch [{} / {}]\t Test loss: {}'.format(epoch + 1, n_epoch, np.array(test_loss).mean()))
@@ -298,6 +301,7 @@ def train(args):
                         picture = picture.permute([2, 0, 1])
                         video = video.permute([0, 1, 4, 2, 3])
 
+                        u_model.eval()
                         u_sample_res = u_model(torch.log(audio_sum).detach())
                         v_sample_res = v_model(video)
                         g_sample_res = g_model.forward_pixelwise(v_sample_res, u_sample_res)
@@ -320,6 +324,7 @@ def train(args):
                         plt.imsave(os.path.join(args.train_dir, "example_images/epoch_final_{}.png".format(epoch)),
                                    np.transpose(output.cpu().numpy(), (1, 2, 0)))
                         print("Example saved")
+                        u_model.train()
                     else:
                         break
 
