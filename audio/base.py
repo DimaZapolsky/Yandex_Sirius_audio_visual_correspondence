@@ -114,16 +114,28 @@ class UnetBlock(torch.nn.Module):
             stride=2, padding=1,
             bias=use_bias
         )
-
+        down_conv2 = torch.nn.Conv2d(
+            inner_input_channels,
+            inner_input_channels,
+            kernel_size=3,
+            padding=1,
+        )
         if outermost:
             up_conv = torch.nn.Conv2d(
                 inner_output_channels,
                 output_channels,
                 kernel_size=3,
+                padding=1,
+                bias=use_bias
+            )
+            up_conv2 = torch.nn.Conv2d(
+                output_channels,
+                output_channels,
+                kernel_size=3,
                 padding=1
             )
-            down = [down_conv]
-            up = [up_relu, up_sample, up_conv]
+            down = [down_conv, down_relu, down_conv2]
+            up = [up_relu, up_sample, up_conv, up_relu, up_conv2]
 
         elif innermost:
             up_conv = torch.nn.Conv2d(
@@ -133,8 +145,15 @@ class UnetBlock(torch.nn.Module):
                 padding=1,
                 bias=use_bias
             )
-            down = [down_relu, down_conv]
-            up = [up_relu, up_sample, up_conv, up_norm]
+            up_conv2 = torch.nn.Conv2d(
+                output_channels,
+                output_channels,
+                kernel_size=3,
+                padding=1,
+                bias=use_bias
+            )
+            down = [down_relu, down_conv, down_relu, down_conv2]
+            up = [up_relu, up_sample, up_conv, up_norm, up_relu, up_conv2]
 
         else:
             up_conv = torch.nn.Conv2d(
@@ -144,8 +163,15 @@ class UnetBlock(torch.nn.Module):
                 padding=1,
                 bias=use_bias
             )
-            down = [down_relu, down_conv, down_norm]
-            up = [up_relu, up_sample, up_conv, up_norm]
+            up_conv2 = torch.nn.Conv2d(
+                output_channels,
+                output_channels,
+                kernel_size=3,
+                padding=1,
+                bias=use_bias
+            )
+            down = [down_relu, down_conv, down_norm, down_relu, down_conv2]
+            up = [up_relu, up_sample, up_conv, up_norm, up_relu, up_conv2]
 
         model = down
         if submodule:
