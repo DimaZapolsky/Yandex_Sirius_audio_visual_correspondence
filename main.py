@@ -75,7 +75,7 @@ def train(args):
             fps=args.fps, frequency=args.freq, fragment_len=args.fragment_len, batch_size=batch_size,
             window_len=args.window_len, overlap_len=args.overlap_len,
             audio_dir=os.path.join(args.train_set_dir, 'audios/train'),
-            video_dir=os.path.join(args.train_set_dir, 'videos/train'), random_crop=False, random_shuffle=False),
+            video_dir=os.path.join(args.train_set_dir, 'videos/train'), random_crop=True, random_shuffle=True),
             batch_size=batch_size)
 
     data_test_loader = DataLoader(Dataset(height=height, width=width,
