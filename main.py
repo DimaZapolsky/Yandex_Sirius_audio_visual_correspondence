@@ -296,14 +296,14 @@ def train(args):
                     if eval_batch_n == 0:
                         picture = eval_data[0][-1, 0, -1, :, :, :].to(device)
                         video = eval_data[0][-1:, 0, :, :, :, :].to(device)
-                        audio = eval_data[1][-1:, 0, :].to(device)
+                        audio_sum = eval_data[1][-1:, 0, :].to(device) + 1e-10
 
                         picture = picture.permute([2, 0, 1])
                         video = video.permute([0, 1, 4, 2, 3])
 
                         u_model.eval()
                         u_sample_res = u_model(torch.log(audio_sum).detach())# + torch.log(torch.tensor([1e10])).to(device))
-                        v_sample_res = v_model(video)
+                        v_sample_res = v_model.forward_eval(video)
                         g_sample_res = g_model.forward_pixelwise(v_sample_res, u_sample_res)
 
                         model_sample_answer = torch.mul(g_sample_res, audio_sum[:, None, :, :, :])

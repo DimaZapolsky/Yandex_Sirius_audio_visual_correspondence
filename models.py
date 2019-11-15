@@ -30,6 +30,7 @@ class Video(nn.Module):
         self.main.add_module("conv_k", nn.Conv2d(512, n_channels, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)))
 
         self.tmp_conv = nn.AdaptiveMaxPool3d(output_size=(1, height // 16, width // 16))
+        self.tmp_conv_field = nn.AdaptiveMaxPool3d(output_size=(1, 1, 1))
 
         self.activation = nn.Sigmoid()
 
@@ -38,6 +39,17 @@ class Video(nn.Module):
         #self.tmp_conv.apply(init)
 
     def forward(self, input):
+        x = input.reshape((-1, 3, self.height, self.width))
+        x = self.main(x)
+
+        x = x.reshape((-1, self.n_frames, self.n_channels, self.height // 16, self.width // 16))
+
+        x = x.permute((0, 2, 1, 3, 4))
+        x = self.tmp_conv_field(x).squeeze(2)
+        x = self.activation(x)
+        return x
+
+    def forward_eval(self, input):
         x = input.reshape((-1, 3, self.height, self.width))
         x = self.main(x)
 
