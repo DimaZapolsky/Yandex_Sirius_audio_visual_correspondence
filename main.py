@@ -189,7 +189,7 @@ def train(args):
     loss_train = []
     loss_test = []
 
-    writer.add_graph(u_model, v_model, g_model)
+    #writer.add_graph(u_model, v_model, g_model)
     test_loss = []
     with torch.no_grad():
         for test_batch_n, test_data in enumerate(data_test_loader, 0):
@@ -221,7 +221,7 @@ def train(args):
     start_time = time.time()
     for epoch in range(start_epoch, n_epoch):
         print('\nepoch: {}\n'.format(epoch + 1))
-        if epoch == 40 or epoch == 80:
+        if epoch == 80 or epoch == 160:
             for g in opt_v.param_groups:
                 g['lr'] *= 0.1
             for g in opt_u.param_groups:
@@ -287,18 +287,24 @@ def train(args):
             sum_sq_gr_g = 0
             sum_sq_gr_v = 0
             sum_sq_gr_u = 0
-            for g in opt_g.param_groups():
+            for g in opt_g.param_groups:
                 for j in g['params']:
+                    if j.grad is None:
+                        continue
                     sum_sq_gr_g = torch.sum(j.grad) ** 2
                 sum_lr_g += g['lr']
                 cou_lr_g += 1
-            for g in opt_v.param_groups():
+            for g in opt_v.param_groups:
                 for j in g['params']:
+                    if j.grad is None:
+                        continue
                     sum_sq_gr_v = torch.sum(j.grad) ** 2
                 sum_lr_v += g['lr']
                 cou_lr_v += 1
-            for g in opt_u.param_groups():
+            for g in opt_u.param_groups:
                 for j in g['params']:
+                    if j.grad is None:
+                        continue
                     sum_sq_gr_u = torch.sum(j.grad) ** 2
                 sum_lr_u += g['lr']
                 cou_lr_u += 1
