@@ -20,7 +20,9 @@ from audio import base
 from audio.base import Unet
 from librosa.core import istft
 from dataset.utils import get_picture_from_model_ans
+from torch.utils.tensorboard import SummaryWriter
 
+writer = SummaryWriter()
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -187,7 +189,7 @@ def train(args):
     loss_train = []
     loss_test = []
 
-
+    writer.add_graph(u_model, v_model, g_model)
     test_loss = []
     with torch.no_grad():
         for test_batch_n, test_data in enumerate(data_test_loader, 0):
@@ -268,8 +270,45 @@ def train(args):
 
         if (epoch + 1) % epoch_loss_freq == 0:
             print('epoch: [{:<4} / {:<4}]   |   TRAIN_LOSS: {:<20}   |   average time per epoch: {}'.format(epoch + 1, n_epoch, np.array(losses).mean(), (time.time() - start_time) / (epoch + 1)))
+            writer.add_scalar('Loss/train', np.array(losses).mean(), epoch)
             print('WEIGHTS:', g_model.weights, file=weight_log_file)
+            writer.add_scalar('Weights/g/mean', g_model.weights.mean(), epoch)
+            writer.add_scalar('Weights/g/std', g_model.weights.std(), epoch)
+            writer.add_scalar('Weights/g/min', g_model.weights.min(), epoch)
+            writer.add_scalar('Weights/g/max', g_model.weights.max(), epoch)
             print('BIAS:', g_model.bias, file=weight_log_file)
+            writer.add_scalar('Weights/g/bias', g_model.bias, epoch)
+            sum_lr_g = 0
+            cou_lr_g = 0
+            sum_lr_v = 0
+            cou_lr_v = 0
+            sum_lr_u = 0
+            cou_lr_u = 0
+            sum_sq_gr_g = 0
+            sum_sq_gr_v = 0
+            sum_sq_gr_u = 0
+            for g in opt_g.param_groups():
+                for j in g['params']:
+                    sum_sq_gr_g = torch.sum(j.grad) ** 2
+                sum_lr_g += g['lr']
+                cou_lr_g += 1
+            for g in opt_v.param_groups():
+                for j in g['params']:
+                    sum_sq_gr_v = torch.sum(j.grad) ** 2
+                sum_lr_v += g['lr']
+                cou_lr_v += 1
+            for g in opt_u.param_groups():
+                for j in g['params']:
+                    sum_sq_gr_u = torch.sum(j.grad) ** 2
+                sum_lr_u += g['lr']
+                cou_lr_u += 1
+            writer.add_scalar('lr/g', sum_lr_g / cou_lr_g, epoch)
+            writer.add_scalar('lr/v', sum_lr_v / cou_lr_v, epoch)
+            writer.add_scalar('lr/u', sum_lr_u / cou_lr_u, epoch)
+            writer.add_scalar('grad/g', sum_sq_gr_g ** 0.5, epoch)
+            writer.add_scalar('grad/v', sum_sq_gr_v ** 0.5, epoch)
+            writer.add_scalar('grad/u', sum_sq_gr_u ** 0.5, epoch)
+
             print('WEIGHTS GRAD:', g_model.weights.grad, file=weight_log_file)
             print('BIAS GRAD:', g_model.bias.grad, file=weight_log_file)
 
@@ -297,6 +336,7 @@ def train(args):
 
             loss_test.append(np.array(test_loss).mean())
             print('epoch [{} / {}]\t Test loss: {}'.format(epoch + 1, n_epoch, np.array(test_loss).mean()))
+            writer.add_scalar('Loss/test', np.array(test_loss).mean(), epoch)
 
         if (epoch + 1) % example_freq == 0:
             with torch.no_grad():
@@ -343,6 +383,7 @@ def train(args):
             torch.save(g_model, path_g.format(epoch))
             torch.save(epoch, path_epoch)
             print('Model saved')
+    writer.close()
 
 
 def main():
