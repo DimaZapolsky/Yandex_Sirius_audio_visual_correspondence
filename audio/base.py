@@ -74,90 +74,90 @@ class Unet(torch.nn.Module):
         output_data = self.unet_block(output_data)
         return self.activation(output_data)
 
-    class UnetBlock(torch.nn.Module):
-        def __init__(
-                self,
-                output_channels, inner_input_channels,
-                input_channels=None, inner_output_channels=None,
-                outermost=False, innermost=False,
-                use_dropout=False, noskip=False,
-                submodule=None,
-                dropout_p=0.5
-        ):
-            super(UnetBlock, self).__init__()
-            self.outermost = outermost
-            self.noskip = noskip
-            use_bias = False
+class UnetBlock(torch.nn.Module):
+    def __init__(
+            self,
+            output_channels, inner_input_channels,
+            input_channels=None, inner_output_channels=None,
+            outermost=False, innermost=False,
+            use_dropout=False, noskip=False,
+            submodule=None,
+            dropout_p=0.5
+    ):
+        super(UnetBlock, self).__init__()
+        self.outermost = outermost
+        self.noskip = noskip
+        use_bias = False
 
-            if input_channels is None:
-                input_channels = output_channels
-            if innermost:
-                inner_output_channels = inner_input_channels
-            elif inner_output_channels is None:
-                inner_output_channels = 2 * inner_input_channels
+        if input_channels is None:
+            input_channels = output_channels
+        if innermost:
+            inner_output_channels = inner_input_channels
+        elif inner_output_channels is None:
+            inner_output_channels = 2 * inner_input_channels
 
-            down_relu = torch.nn.LeakyReLU(0.2, True)
-            down_norm = torch.nn.BatchNorm2d(inner_input_channels)
+        down_relu = torch.nn.LeakyReLU(0.2, True)
+        down_norm = torch.nn.BatchNorm2d(inner_input_channels)
 
-            up_relu = torch.nn.ReLU(True)
-            up_norm = torch.nn.BatchNorm2d(output_channels)
-            up_sample = torch.nn.Upsample(
-                scale_factor=2,
-                mode='bilinear',
-                align_corners=True
+        up_relu = torch.nn.ReLU(True)
+        up_norm = torch.nn.BatchNorm2d(output_channels)
+        up_sample = torch.nn.Upsample(
+            scale_factor=2,
+            mode='bilinear',
+            align_corners=True
+        )
+
+        down_conv = torch.nn.Conv2d(
+            input_channels,
+            inner_input_channels,
+            kernel_size=4,
+            stride=2, padding=1,
+            bias=use_bias
+        )
+
+        if outermost:
+            up_conv = torch.nn.Conv2d(
+                inner_output_channels,
+                output_channels,
+                kernel_size=3,
+                padding=1
             )
+            down = [down_conv]
+            up = [up_relu, up_sample, up_conv]
 
-            down_conv = torch.nn.Conv2d(
-                input_channels,
-                inner_input_channels,
-                kernel_size=4,
-                stride=2, padding=1,
+        elif innermost:
+            up_conv = torch.nn.Conv2d(
+                inner_output_channels,
+                output_channels,
+                kernel_size=3,
+                padding=1,
                 bias=use_bias
             )
+            down = [down_relu, down_conv]
+            up = [up_relu, up_sample, up_conv, up_norm]
 
-            if outermost:
-                up_conv = torch.nn.Conv2d(
-                    inner_output_channels,
-                    output_channels,
-                    kernel_size=3,
-                    padding=1
-                )
-                down = [down_conv]
-                up = [up_relu, up_sample, up_conv]
+        else:
+            up_conv = torch.nn.Conv2d(
+                inner_output_channels,
+                output_channels,
+                kernel_size=3,
+                padding=1,
+                bias=use_bias
+            )
+            down = [down_relu, down_conv, down_norm]
+            up = [up_relu, up_sample, up_conv, up_norm]
 
-            elif innermost:
-                up_conv = torch.nn.Conv2d(
-                    inner_output_channels,
-                    output_channels,
-                    kernel_size=3,
-                    padding=1,
-                    bias=use_bias
-                )
-                down = [down_relu, down_conv]
-                up = [up_relu, up_sample, up_conv, up_norm]
+        model = down
+        if submodule:
+            model += [submodule]
+        model += up
+        if use_dropout:
+            model += [torch.nn.Dropout(dropout_p)]
 
-            else:
-                up_conv = torch.nn.Conv2d(
-                    inner_output_channels,
-                    output_channels,
-                    kernel_size=3,
-                    padding=1,
-                    bias=use_bias
-                )
-                down = [down_relu, down_conv, down_norm]
-                up = [up_relu, up_sample, up_conv, up_norm]
+        self.model = torch.nn.Sequential(*model)
 
-            model = down
-            if submodule:
-                model += [submodule]
-            model += up
-            if use_dropout:
-                model += [torch.nn.Dropout(dropout_p)]
+    def forward(self, input_data):
+        if self.outermost or self.noskip:
+            return self.model(input_data)
 
-            self.model = torch.nn.Sequential(*model)
-
-        def forward(self, input_data):
-            if self.outermost or self.noskip:
-                return self.model(input_data)
-
-            return torch.cat([input_data, self.model(input_data)], 1)
+        return torch.cat([input_data, self.model(input_data)], 1)
