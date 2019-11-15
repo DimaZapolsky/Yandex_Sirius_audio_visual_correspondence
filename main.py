@@ -219,6 +219,14 @@ def train(args):
     start_time = time.time()
     for epoch in range(start_epoch, n_epoch):
         print('\nepoch: {}\n'.format(epoch + 1))
+        if epoch == 40 or epoch == 80:
+            for g in opt_v.param_groups:
+                g['lr'] *= 0.1
+            for g in opt_u.param_groups:
+                g['lr'] *= 0.1
+            for g in opt_g.param_groups:
+                g['lr'] *= 0.1
+
         for batch_n, data in enumerate(data_loader, 0):
             audio_sum = data[2].to(device) + 1e-10
 
