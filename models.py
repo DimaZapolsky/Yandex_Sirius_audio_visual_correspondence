@@ -13,17 +13,19 @@ class Video(nn.Module):
 
         self.main = nn.Sequential(*list(models.resnet18(pretrained=True).children())[:-2])
 
-        self.main[-1][0].conv1 = nn.Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
-        self.main[-1][0].downsample[0] = nn.Conv2d(256, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
-        self.main[-1][1].conv1 = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), dilation=(2, 2), padding=(2, 2), bias=False)
-        self.main[-1][1].conv2 = nn.Conv2d(512, 512, kernel_size=(3, 3), stride=(1, 1), dilation=(2, 2), padding=(2, 2), bias=False)
-
         def init(m):
-            if isinstance(m, (nn.Conv2d, nn.Conv3d)):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
-                nn.init.constant_(m.weight, 1)
-                nn.init.constant_(m.bias, 0)
+            if m.__class__.__name__.find('Conv') != -1:
+                if m.stride == (2, 2):
+                    m.stride = (1, 1)
+                    if m.kernel_size == (3, 3):
+                        m.dilation = (1, 1)
+                        m.padding = (1, 1)
+                else:
+                    if (m.kernel_size == (3, 3)):
+                        m.dilation = (2, 2)
+                        m.padding = (2, 2)
+
+        self.main[-1].apply(init)
 
         self.main.add_module("conv_k", nn.Conv2d(512, n_channels, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)))
 
