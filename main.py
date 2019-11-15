@@ -94,7 +94,7 @@ def train(args):
             batch_size=batch_size,
             window_len=args.window_len, overlap_len=args.overlap_len,
             audio_dir=os.path.join(args.test_set_dir, 'audios/test'),
-            video_dir=os.path.join(args.test_set_dir, 'videos/test'), random_crop=False, random_shuffle=False),
+            video_dir=os.path.join(args.test_set_dir, 'videos/test'), random_crop=True, random_shuffle=True),
             batch_size=batch_size)
 
     video_model_lr = args.video_model_lr  # learning rate for video model
