@@ -143,7 +143,7 @@ def train(args):
         opt_kwargs = {}
     elif args.optimizer.lower() == 'sgd':
         opt_cls = optim.SGD
-        opt_kwargs = {'momentum': 0.9, 'weight_decay': 1e-4}
+        opt_kwargs = {'momentum': 0.9, 'weight_decay': 1e-5}
     else:
         raise TypeError("unknown optimizer")
 
@@ -195,7 +195,7 @@ def train(args):
             for i in range(n_video):
                 video = test_data[0][:, i].to(device)
 
-                u_res = u_model(torch.log(audio_sum).detach())
+                u_res = u_model(torch.log(audio_sum).detach() + torch.log(torch.tensor([1e10])).to(device))
 
                 u_model.eval()
                 video = video.permute([0, 1, 4, 2, 3])
@@ -230,7 +230,7 @@ def train(args):
 
                 video = data[0][:, i].to(device)
 
-                u_res = u_model(torch.log(audio_sum).detach())
+                u_res = u_model(torch.log(audio_sum).detach() + torch.log(torch.tensor([1e10])).to(device))
 
                 video = video.permute([0, 1, 4, 2, 3])
 
@@ -273,7 +273,7 @@ def train(args):
                     for i in range(n_video):
                         video = test_data[0][:, i].to(device)
                         u_model.eval()
-                        u_res = u_model(torch.log(audio_sum).detach())
+                        u_res = u_model(torch.log(audio_sum).detach() + torch.log(torch.tensor([1e10])).to(device))
 
                         video = video.permute([0, 1, 4, 2, 3])
                         v_res = v_model(video)
@@ -302,7 +302,7 @@ def train(args):
                         video = video.permute([0, 1, 4, 2, 3])
 
                         u_model.eval()
-                        u_sample_res = u_model(torch.log(audio_sum).detach())
+                        u_sample_res = u_model(torch.log(audio_sum).detach() + torch.log(torch.tensor([1e10])).to(device))
                         v_sample_res = v_model(video)
                         g_sample_res = g_model.forward_pixelwise(v_sample_res, u_sample_res)
 
