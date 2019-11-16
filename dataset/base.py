@@ -5,7 +5,11 @@ import librosa
 from . import utils
 import random
 import numpy as np
+import torchvision
 from torchvision import transforms
+from gluoncv.data import ADE20KSegmentation
+import gluon
+from PIL import Image
 
 
 class Dataset(torch.utils.data.Dataset):
@@ -17,7 +21,8 @@ class Dataset(torch.utils.data.Dataset):
             window_len, overlap_len,
             n_fragments=2,
             random_crop=True,
-            random_shuffle=True
+            random_shuffle=True,
+            silent_prob=0
     ):
         self.height = height
         self.width = width
@@ -34,6 +39,8 @@ class Dataset(torch.utils.data.Dataset):
         self.video_dir = video_dir
         self.audio_dir = audio_dir
 
+        self.silent_dataset = ADE20KSegmentation(split='train')
+
         self.window_len = window_len
         self.overlap_len = overlap_len
 
@@ -41,6 +48,7 @@ class Dataset(torch.utils.data.Dataset):
 
         self.random_crop = random_crop
         self.random_shuffle = random_shuffle
+        self.silent_prob = silent_prob
 
     def update_permute(self):
         self.load_order = torch.randperm(self.dataset_size)
@@ -56,13 +64,23 @@ class Dataset(torch.utils.data.Dataset):
     def normalize_video(self, video, mean, std):
         video *= (std / torch.std(video, [1, 2]))[:, None, None, :]
         video -= (torch.mean(video, [1, 2]) - mean)[:, None, None, :]
-        return video
+        return torch.clamp(video, 1e-10, 1 - 1e-10)
 
     def normalize_video_2(self, video, **kwargs):
         return video / 255
 
     def get_one_item(self, index):
         # video and sound are assumed to be in corresponding directories
+        if random.random() < self.silent_prob:
+             img, mask = self.silent_dataset[random.randint(0, len(self.silent_dataset) - 1)]
+             img = Image.fromarray(img.asnumpy(), 'RGB').convert('RGB')
+             img = torchvision.transforms.Resize(224)(img)
+             torchvision.transforms.CenterCrop((224, 224))(img)
+             img = torch.Tensor(np.array(img))
+             img = torch.stack([img] * int(self.fragment_len * self.fps), 0)
+             audio = torch.zeros(int(self.fragment_len * self.frequency))
+             return self.normalize_video_2(img, mean=torch.Tensor([0.485, 0.456, 0.406]), std=torch.Tensor([0.229, 0.224, 0.225])), audio
+ 
         video = torch.load(os.path.join(self.video_dir, '{}.pt'.format(self.load_order[index]))).type(torch.Tensor)
         audio = torch.load(os.path.join(self.audio_dir, '{}.pt'.format(self.load_order[index]))).type(torch.Tensor)
 
@@ -73,7 +91,7 @@ class Dataset(torch.utils.data.Dataset):
             begin = (video_len_sec - self.fragment_len) // 2
         video = video[int(begin * self.fps):int(begin * self.fps) + int(self.fragment_len * self.fps)]
         audio = audio[int(begin * self.frequency):int(begin * self.frequency) + int(self.fragment_len * self.frequency)]
-        if audio.shape[0] != int(self.fragment_len * self.frequency) or video.shape[0] != int(self.fragment_len * self.fps) or begin < 0:
+        if audio.shape[0] != int(self.fragment_len * self.frequency) or video.shape[0] != int(self.fragment_len * self.fps) or begin < 0 or abs(torch.abs(audio).sum()) < 0.00001:
             return self.get_one_item(random.randint(0, self.dataset_size - 1))
 
         return self.normalize_video_2(video, mean=torch.Tensor([0.485, 0.456, 0.406]), std=torch.Tensor([0.229, 0.224, 0.225])), audio

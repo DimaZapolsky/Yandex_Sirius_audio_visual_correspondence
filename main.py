@@ -58,6 +58,7 @@ def parse_args():
     parser.add_argument('--audio-activation', default=None, help='Activation for audio model')
     parser.add_argument('--use-dropout', default=False, type=bool, help='Use dropout')
     parser.add_argument('--dropout-p', default=0.5, type=float, help='P in dropout')
+    parser.add_argument('--silent-prob', default=0, type=float, help='Probabilitny of silent video in dataset')
     args = parser.parse_args()
     return args
 
@@ -81,7 +82,7 @@ def train(args):
             fps=args.fps, frequency=args.freq, fragment_len=args.fragment_len, batch_size=batch_size,
             window_len=args.window_len, overlap_len=args.overlap_len,
             audio_dir=os.path.join(args.train_set_dir, 'audios/train'),
-            video_dir=os.path.join(args.train_set_dir, 'videos/train'), random_crop=True, random_shuffle=True),
+            video_dir=os.path.join(args.train_set_dir, 'videos/train'), random_crop=True, random_shuffle=True, silent_prob=args.silent_prob),
             batch_size=batch_size)
 
     data_test_loader = DataLoader(Dataset(height=height, width=width,
@@ -221,13 +222,13 @@ def train(args):
     start_time = time.time()
     for epoch in range(start_epoch, n_epoch):
         print('\nepoch: {}\n'.format(epoch + 1))
-        if epoch == 80 or epoch == 160:
+        if epoch >= 40 and epoch < 100:
             for g in opt_v.param_groups:
-                g['lr'] *= 0.1
+                g['lr'] *= 0.96
             for g in opt_u.param_groups:
-                g['lr'] *= 0.1
+                g['lr'] *= 0.96
             for g in opt_g.param_groups:
-                g['lr'] *= 0.1
+                g['lr'] *= 0.96
 
         for batch_n, data in enumerate(data_loader, 0):
             audio_sum = data[2].to(device) + 1e-10
